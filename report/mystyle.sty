@@ -1,0 +1,56 @@
+
+%\usepackage[english]{babel}		% for english hyphenation
+\usepackage[portuguese]{babel}		% for portuguese hyphenation
+\usepackage[utf8]{inputenc}		% for better support of diacritics, ...; not really needed in english:there are few of them and there are alternate ways of typesetting them
+\usepackage[T1]{fontenc}			% for portuguese hyphenation
+
+
+\usepackage{lmodern}			% latin modern font; the default, only better; has math support
+\linespread{1.2}\selectfont		% distance between lines
+\setlength{\parskip}{5pt}		% distance between paragraphs
+\parindent=1cm					% indentation
+
+\usepackage{color} 			% defines colors
+\usepackage{fancyhdr}		% fancy headres and footers
+\usepackage{pdflscape}		% to change to/from landscape
+\usepackage{footmisc}		% required for \footref
+\usepackage{verbatim}		% better support for verbatim enviornment
+\usepackage{xspace}			% in newcommand, \xspace determines automaticaly if the new command should be followed with a space or not
+
+\usepackage{graphicx}		% required for images
+\usepackage{grffile}		% better support for file names / paths (e.g. spaces in names)
+\graphicspath{{./Img/}{./Img/others/}}		% requires at least two sets of {}
+\DeclareGraphicsExtensions{.pdf,.jpeg,.jpg,.png}	% these extensions may be omitted
+%\usepackage{wrapfig}		% avoid like hell
+
+%\usepackage[table]{xcolor}
+%\usepackage[figuresright]{rotating}
+%\usepackage{dcolumn}
+%\newcolumntype{d}[1]{D{.}{\cdot}{#1}}
+%\newcolumntype{.}{D{.}{.}{-1}}
+%\newcolumntype{,}{D{,}{,}{2}}
+
+\usepackage{rotating}		% to use \begin/\end {sideways}
+
+\usepackage[font=footnotesize]{subfig}	%caption=false,
+
+\usepackage{amsmath,amssymb,amscd}		% extend math
+\usepackage{bm}							% allow bold greek letters (e.g. $\bm{\alpha}$)
+
+
+\usepackage{natbib}
+\usepackage[numbib,numindex,nottoc]{tocbibind}		% adds References, Index, List of Tables, List of Figures, Contents to ToC (with numbers)
+
+
+\usepackage[bookmarks=true]{hyperref}			%
+\hypersetup{									%
+	pdfdisplaydoctitle=true,					%
+	bookmarksnumbered=true,						%
+	hidelinks,									% removes border and color
+	bookmarksopen=true,							%
+	pdfauthor={Bruno Santos; Flávio Schuindt},						%
+	pdftitle={Yet Another Simple Calculator},							%
+	pdfsubject={implementação em C de calculadora em rede com notação pós-fixada},						%
+	pdfkeywords={calculadora; notação polanesa inversa; notação pós-fixada}						%
+}												%
+%\setcounter{secnumdepth}{0}					% easy way around having bookmarks with \section* and hyperref, using \section instead; set number accordingly
