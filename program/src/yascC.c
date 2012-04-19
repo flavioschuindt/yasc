@@ -8,12 +8,12 @@
  *  _______________________________________________________  *
  *                                                           *
  *  YASC Client  v0.1                                        *
- *                                                           *
+ *     order independent options                             *
  *      -s name port      specify server                     *
  *      -f "*.txt"        open batch file                    *
  *                          (txt extension not enforced)     *
  *      -g                start in debug mode                *
- *      -q                quiet: suppress output             *
+ *      -l                log: suppress output               *
  *                          (generates log.txt)              *
  *                                                           *
  *************************************************************/
@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #define OWNER	/* owner of global variables */
 #include <commonC.h>
@@ -28,70 +29,84 @@
 
 
 
-#define add(m1,m2) ((m1)+(m2))			/* these will go to the server source */
-#define subtract(m1,m2) ((m1)-(m2))
-#define multiply(m1,m2) ((m1)*(m2))
-#define divide(m1,m2) ((m1)/(m2))
-#define remainder(m1,m2) ((m1)%(m2))
-
-
-
 int main( int argc, char *argv[] ) {
 
 
-	int i, lineNumber;
+	int i=1;
 	char *fileName, line[MAX_LINE];
-	FILE *fin=stdin;
+	time_t now;
+	struct tm *local;
+	FILE *fin=stdin;	/* defaults to shell */
 
-	fout = stdout;
+	fout = stdout;		/* defaults to shell */
 	DBG = 0;
 
 
-	/* Handle of Flags */
-	if( argc >= 1 ) {
+	/* argument parsing; setup*/
+	if( argc > 1 ) {
 
-		for(i=0;i<argc;i++) {
+		while( i < argc ) {
 
-			if( strcmp(argv[i],"-f") == 0 ) {				/* -f */
-				fin = fopen(argv[i+1],"r");
-				if( fin == NULL ) {
-					fprintf(fout,">> ERROR: \"%s\" File not found.", argv[i+1]);
+			/* -s */
+			if( strcmp(argv[i],"-s") == 0 ) {		/* UNDER CONSTRUCTION */
+
+				/************** name & port !!!*/
+				if( 0 ) {
+					fprintf(stdout,">> ERROR: can't reach %s at %s.\n", argv[i+1], argv[i+2]);
 				} else {
-					fileName = argv[i+1];
-					i++;		/* jumps the name argument; but if not if the file is not valid */
+					i+=2;	/* jumps the name and port argument; but if not if the file is not valid */
 				}
 
-			} else if( strcmp(argv[i],"-q") == 0 ) {		/* -q */
-				fout = fopen("log.txt","a");
-				fprintf(fout,">> Logging output for \"%s\"\n",fileName);
+			/* -f */
+			} else if( strcmp(argv[i],"-f") == 0 ) {		/* if more than one file is passed as argument, only the last one is taken into account */
+				fin = fopen(argv[i+1],"r");
+				if( fin == NULL ) {
+					fprintf(stdout,">> ERROR: file \"%s\" not found.\n", argv[i+1]);
+				} else {
+					fileName = argv[i+1];
+					i++;	/* jumps the name argument; but not if the file isn't valid */
+				}
 
-			} else if( strcmp(argv[i],"-g") == 0 ) {		/* -g */
-				DBG=1;		/* repeated use of the flag won't undo the effect */
-				fprintf(fout,DBG_ON);
+			/* -l */
+			} else if( strcmp(argv[i],"-l") == 0 ) {		/* repeated use of the flag won't undo the effect */
+				fout = fopen("log.txt","a");
+				if( fout == NULL ) {
+					fprintf(stdout,">> ERROR: can't open log file.\n>> Redirecting output to \"stdout\"");
+					fout = stdout;
+				}
+
+			/* -g */
+			} else if( strcmp(argv[i],"-g") == 0 ) {		/* repeated use of the flag won't undo the effect */
+				DBG=1;
+
+			/* invalid argument */
+			} else {
+				fprintf(stdout,">> ERROR: invalid argument \"%s\".\n", argv[i]);
 			}
 
+			i++;
 		}
 	}
 
 
-	lineNumber=0;
-	while( fgets(line,MAX_LINE,fin) != NULL ) {    /* reads successive lines from source; repeats at the end of each instruction */
-
-		parse_line(line);
-		lineNumber++;
+	if( fout != stdout ) {
+		now = time((time_t *)NULL);
+		local = localtime(&now);
+		fprintf(fout,"=====================================\n");
+		fprintf(fout," Logging output for \"%s\"\n",fileName);
+		fprintf(fout," %d/%d/%d\t--\t%d:%d:%d\n", local->tm_mday, local->tm_mon, local->tm_year + 1900, local->tm_hour, local->tm_min, local->tm_sec);
+		fprintf(fout,"=====================================\n\n");
+	}
+	if( DBG & 1 ) {
+		fprintf(fout,DBG_ON);
 	}
 
 
-	/* only runs if a file was provided */
-	/*fprintf(fout,"________________________________________________________________\n>> Processed %d lines tottaling %d commands and %d errors\n", lineNumber, stat[0], stat[1]);*/
+	/* reads successive lines from source; repeats at the end of each instruction */
+	while( fgets(line,MAX_LINE,fin) != NULL ) {
+		parse_line(line);
+	}
 
-
-	/*main(0,NULL);*/	/* recursive call keeps program running in command line mode after processing a .txt */
 
 	return 0;
 }
-
-
-
-/*TO DO: changes stderr descriptor for a .log file to use in debug mode (? implementation inside parse_line ?)
-			use  strrchr( )  to enforce .txt  */

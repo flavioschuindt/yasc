@@ -56,7 +56,7 @@ runS:
 
 runC:
 	clear
-	./bin/yascC.exe -f init/cmd.txt -g -q
+	./bin/yascC.exe -s NNNN PPPP -f init/cmd.txt -g -l
 
 #############################################################
 # Maintenance
@@ -65,4 +65,3 @@ clean:
 
 distclean:
 	rm -f obj/*.o
-

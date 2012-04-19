@@ -22,11 +22,11 @@
 /* Global defines & macros */
 
 #define MAX_LINE 128	/* maximum length for a command line */
-#define DBG_ON "\n>> Debug mode ON\n"
-#define DBG_OFF "\n>> Debug mode OFF\n"
+#define DBG_ON ">> Debug mode ON\n"
+#define DBG_OFF ">> Debug mode OFF\n"
 
 
 /* Global Variables; remember to initialize */
 
-EXTERN int DBG;			/* Flag for Debug mode */
-EXTERN FILE *fout;		/* Std output descriptor */
+EXTERN int DBG;			/* Flag for Debug mode; 'ON' for DBG odd, 'OFF' for DBG even */
+EXTERN FILE *fout;		/* Output file descriptor */

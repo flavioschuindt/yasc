@@ -23,9 +23,4 @@ void parse_line (char *string);
 
 
 
-
-
-
-
 #endif
-
