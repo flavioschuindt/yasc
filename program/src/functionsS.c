@@ -4,10 +4,12 @@
 #include <pthread.h>
 
 #include <prototypesS.h>
-#include <newvarS.h>
+#include <newvar.h>
 #include <globalmacros.h>
 
 extern requests_descriptor *req_desc;
+
+extern stack_descriptor *stack_desc;
 
 /*MUTEX to control access to protected resources*/
 pthread_mutex_t request_mutex = PTHREAD_RECURSIVE_MUTEX_INITIALIZER_NP;
@@ -22,6 +24,10 @@ void createInitialServerConditions()
 	req_desc->first = NULL;
 	req_desc->last = NULL;
 	req_desc->num_requests = 0;
+
+	MALL(stack_desc,1);
+	stack_desc->first = NULL;
+	stack_desc->count = 0;
 }
 
 void addRequest(unsigned char param1, unsigned char param2,
@@ -86,6 +92,21 @@ void handleParticularRequest(request *req)
 	printf("\nParametro 1: %c\n",req->param1);
 	printf("\nParametro 2: %c\n",req->param2);
 	printf("\nNum Req: %d\n",req_desc->num_requests);
+
+	/*P.S.: The stack never has 0 elements, except before the first request.*/
+		
+	if (req->param1 == 'D'){ /*Is the client trying to send a data?*/
+			
+		stack_element *element;
+		MALL(element,1);
+			
+		stack_desc->count++;
+
+		element->operand = req->param2;
+		element->next = stack_desc->first;
+
+		stack_desc->first = element;
+	}
 	
 }
 

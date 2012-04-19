@@ -7,14 +7,14 @@
  *  Flávio Schuindt     nº74570     MEEC                     *
  *  _______________________________________________________  *
  *                                                           *
- *  New variables                                            *
+ *  Server functions' new variables                          *
  *                                                           *
  *************************************************************/
 
-#ifndef __NEWVAR_H__
-#define __NEWVAR_H__
+#ifndef __NEWVARS_H__
+#define __NEWVARS_H__
 
-#define NUM_HANDLER_THREADS 2
+#define WORKERS 1
 
 typedef struct 
 {
@@ -31,5 +31,19 @@ typedef struct
 }requests_descriptor;
 
 requests_descriptor *req_desc;
+
+typedef struct
+{
+	unsigned char operand; /*An operand in the stack*/
+	struct stack_element *next;
+}stack_element;
+
+typedef struct
+{
+	stack_element *first;
+	int count;
+}stack_descriptor;
+
+stack_descriptor *stack_desc;
 
 #endif

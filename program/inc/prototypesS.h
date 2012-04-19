@@ -35,4 +35,13 @@ void handleParticularRequest(request *req);
 /*Access requests' list and process a specific request got from the list*/
 void* processRequestsListTask(void* data);
 
+/*Math module functions*/
+int add (int a, int b);
+
+int sub (int a, int b);
+
+int mult (int a, int b);
+
+float divide (int a, int b);
+
 #endif

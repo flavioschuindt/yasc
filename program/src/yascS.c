@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <time.h>
 
 #include <newvar.h>
 #include <prototypesS.h>
@@ -51,14 +52,14 @@ int main (int argc, char *argv[]){
 
 	createInitialServerConditions();
 
-	MALL(threads,NUM_HANDLER_THREADS);
+	MALL(threads,WORKERS);
 
-	for (i=0; i<NUM_HANDLER_THREADS; i++) {
+	for (i=0; i<WORKERS; i++) {
 		threads[i] = i;
 		pthread_create(&threads[i], NULL, processRequestsListTask, (void*)&threads[i]);
     }
 
-	for (i = 0; i<8000; i++){
+	for (i = 0; i<10000; i++){
 
 		r1 = rand () % 5;
 		r2 = rand () % 10;
