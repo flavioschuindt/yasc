@@ -10,7 +10,7 @@
  *  YASC Server  v0.1                                        *
  *                                                           *
  *************************************************************/
-#define _GNU_SOURCE
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
@@ -21,30 +21,20 @@
 #include <prototypesS.h>
 #include <globalmacros.h>
 
-extern requests_descriptor *req_desc;
-/*MUTEX to control access to protected resources*/
-extern pthread_mutex_t request_mutex;
+#define OWNER	/* owner of global variables */
+#include <commonS.h>
 
-/* global condition variable for our program. assignment initializes it. */
-extern pthread_cond_t  got_request; 
 
-int main (int argc, char *argv[]){
+int main ( int argc, char *argv[] ) {
 
 	/*Create initial server conditions*/
-
 	unsigned char fbyte[5] = {'+','-','*','/','%'};
-
 	unsigned char sbyte[10] = {'0','1','2','3','4','5','6','7','8','9'};
-
-	struct timespec delay;			 /* used for wasting time */
-
-	request *req;
-
-	int r1 = 0,r2 = 0;
-
-	int i = 0;
-
+	REQUEST *req;
+	int r1=0, r2=0;
+	int i=0;
 	pthread_t *threads;
+
 
 	srand(time(NULL));
 
@@ -52,7 +42,7 @@ int main (int argc, char *argv[]){
 
 	createInitialServerConditions();
 
-	MALL(threads,WORKERS);
+	MALL(threads,WORKERS)
 
 	for (i=0; i<WORKERS; i++) {
 		threads[i] = i;

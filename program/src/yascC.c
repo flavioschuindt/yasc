@@ -42,7 +42,7 @@ int main( int argc, char *argv[] ) {
 	DBG = 0;
 
 
-	/* argument parsing; setup*/
+	/* argument parsing; setup */
 	if( argc > 1 ) {
 
 		while( i < argc ) {
@@ -50,9 +50,9 @@ int main( int argc, char *argv[] ) {
 			/* -s */
 			if( strcmp(argv[i],"-s") == 0 ) {		/* UNDER CONSTRUCTION */
 
-				/************** name & port !!!*/
+/************** name & port !!!*/
 				if( 0 ) {
-					fprintf(stdout,">> ERROR: can't reach %s at %s.\n", argv[i+1], argv[i+2]);
+					fprintf(stdout,">> Setup error!\n>> Can't reach %s at %s.\n", argv[i+1], argv[i+2]);
 				} else {
 					i+=2;	/* jumps the name and port argument; but if not if the file is not valid */
 				}
@@ -61,17 +61,17 @@ int main( int argc, char *argv[] ) {
 			} else if( strcmp(argv[i],"-f") == 0 ) {		/* if more than one file is passed as argument, only the last one is taken into account */
 				fin = fopen(argv[i+1],"r");
 				if( fin == NULL ) {
-					fprintf(stdout,">> ERROR: file \"%s\" not found.\n", argv[i+1]);
+					fprintf(stdout,">> Setup error!\n>> File \"%s\" not found.\n", argv[i+1]);
 				} else {
 					fileName = argv[i+1];
 					i++;	/* jumps the name argument; but not if the file isn't valid */
 				}
 
 			/* -l */
-			} else if( strcmp(argv[i],"-l") == 0 ) {		/* repeated use of the flag won't undo the effect */
+			} else if( strcmp(argv[i],"-l") == 0 ) {		/* repeated use of the flag won't undo the effect; not very useful if the command line is used, but possible nonetheless */
 				fout = fopen("log.txt","a");
 				if( fout == NULL ) {
-					fprintf(stdout,">> ERROR: can't open log file.\n>> Redirecting output to \"stdout\"");
+					fprintf(stdout,">> Setup error!\n>> Can't open log file.\n>> Redirecting output to \"stdout\"");
 					fout = stdout;
 				}
 
@@ -81,13 +81,13 @@ int main( int argc, char *argv[] ) {
 
 			/* invalid argument */
 			} else {
-				fprintf(stdout,">> ERROR: invalid argument \"%s\".\n", argv[i]);
+				fprintf(stdout,">> Setup error!\n>> Invalid argument \"%s\" ignored.\n", argv[i]);
 			}
 
 			i++;
 		}
 	}
-
+/**************************** if bad hostname or port, ask for other */
 
 	if( fout != stdout ) {
 		now = time((time_t *)NULL);

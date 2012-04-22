@@ -7,7 +7,7 @@
  *  Flávio Schuindt     nº74570     MEEC                     *
  *  _______________________________________________________  *
  *                                                           *
- *  Client's generic header                                  *
+ *  Server's generic header                                  *
  *                                                           *
  *************************************************************/
 
@@ -21,7 +21,7 @@
 
 /* Global defines & macros */
 
-#define MAX_LINE 256	/* maximum length for a command line; currently it's not checked to ensure the health of a command*/
+#define WORKERS 5
 #define DBG_ON ">> Debug mode ON\n"
 #define DBG_OFF ">> Debug mode OFF\n"
 
@@ -29,4 +29,8 @@
 /* Global Variables; remember to initialize */
 
 EXTERN int DBG;			/* Flag for Debug mode; 'ON' for DBG odd, 'OFF' for DBG even */
-EXTERN FILE *fout;		/* Output file descriptor */
+EXTERN REQUESTS_DESCRIPTOR req_desc;
+EXTERN STACK_DESCRIPTOR stack_desc;
+
+EXTERN pthread_mutex_t request_mutex;	/* MUTEX to control access to protected resources */
+EXTERN pthread_cond_t  got_request;		/* global condition variable for our program */

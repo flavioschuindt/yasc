@@ -7,43 +7,39 @@
  *  Flávio Schuindt     nº74570     MEEC                     *
  *  _______________________________________________________  *
  *                                                           *
- *  Server functions' new variables                          *
+ *  New variables                                            *
  *                                                           *
  *************************************************************/
 
-#ifndef __NEWVARS_H__
-#define __NEWVARS_H__
+#ifndef __NEWVAR_H__
+#define __NEWVAR_H__
 
-#define WORKERS 1
+/* request to be processed */
+typedef struct request {
+	unsigned char param1;	/*First byte of message*/
+	unsigned char param2;	/*Second byte of message*/
+	/* client ID; some sort of stack identification */
+	struct request *next;	/*It's a linked list of requests, so we need to point to the next*/
+} REQUEST;
 
-typedef struct 
-{
-	unsigned char param1;  /*First byte of message*/
-	unsigned char param2; /*Second byte of message*/
-	struct request *next;  /*It's a linked list of requests, so we need to point to the next*/
-}request;
-
-typedef struct
-{
-	request *first;
-	request *last;
+/* Requests state */
+typedef struct requests_descriptor {
+	REQUEST *first;
+	REQUEST *last;
 	int num_requests;
-}requests_descriptor;
+} REQUESTS_DESCRIPTOR;
 
-requests_descriptor *req_desc;
 
-typedef struct
-{
+typedef struct stack_element {
 	unsigned char operand; /*An operand in the stack*/
 	struct stack_element *next;
-}stack_element;
+} STACK_ELEMENT;
 
-typedef struct
-{
-	stack_element *first;
+
+typedef struct stack_descriptor {
+	STACK_ELEMENT *first;
 	int count;
-}stack_descriptor;
+} STACK_DESCRIPTOR;
 
-stack_descriptor *stack_desc;
 
 #endif

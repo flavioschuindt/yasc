@@ -1,3 +1,11 @@
 ; test
-G
-exit
+G 4 642 133854.225
+345763mais1numero1nvalido R + -
+
+-234576
++23143
+40000000000000000000 ; comentario
+
+exit                  this is not processed!!!!!
+
+nor this, nor anything after 'exit'

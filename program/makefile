@@ -38,14 +38,14 @@ C: yascC.o functionsC.o
 
 
 # .c.o
-yascS.o: yascS.c prototypesS.h
+yascS.o: yascS.c prototypesS.h commonS.h newvar.h
 
 yascC.o: yascC.c prototypesC.h commonC.h
 
 
 functionsC.o: functionsC.c prototypesC.h commonC.h
 
-functionsS.o: functionsS.c prototypesS.h
+functionsS.o: functionsS.c prototypesS.h commonS.h newvar.h
 
 
 #############################################################
@@ -56,7 +56,7 @@ runS:
 
 runC:
 	clear
-	./bin/yascC.exe -s NNNN PPPP -f init/cmd.txt -g -l
+	./bin/yascC.exe -s NNNN PPPP
 
 #############################################################
 # Maintenance
