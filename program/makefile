@@ -7,9 +7,9 @@
 #  Flávio Schuindt     nº74570     MEEC                     #
 #  _______________________________________________________  #
 #                                                           #
-#  MAKEFILE   v1.1                                          #
+#  MAKEFILE   v1.2                                          #
 #                                                           #
-#     compile:                  make S(erver) / C(lient)    #
+#     compile:                  make [S(erver) / C(lient)]  #
 #     quick run:                make run*                   #
 #     clean:                    make clean                  #
 #     clean for distribution:   make distclean              #
@@ -17,19 +17,26 @@
 #############################################################
 
 #############################################################
-# Compilation; set DEBUG to -ggdb if needed
+# Compilation
 vpath %.c src/
 vpath %.h inc/
 
 CC = gcc
-CFLAGS = -Wall -ansi -pedantic -c -I inc/ $(DEBUG) -o
-LFLAGS = -Wall -ansi -pedantic $(DEBUG) -pthread -o
+# Libs: -lnsl: sockets; -pthread: threads; -lm: math
+LIBS = -pthread
+#DEBUG = -ggdb
+WEXTRA = -Wextra
+
+CFLAGS = -Wall $(WEXTRA) -ansi -pedantic $(DEBUG) $(LIBS) -c -I inc/ -o
+LFLAGS = -Wall $(WEXTRA) -ansi -pedantic $(DEBUG) $(LIBS) -o
 
 .c.o:
 	$(CC) $(CFLAGS) obj/$@ $<
 
 
 # macros and vpath don't work well with *.o's !?
+all: C S
+
 S: yascS.o functionsS.o
 	$(CC) $(LFLAGS) bin/yascS.exe obj/yascS.o obj/functionsS.o
 
@@ -37,7 +44,7 @@ C: yascC.o functionsC.o
 	$(CC) $(LFLAGS) bin/yascC.exe obj/yascC.o obj/functionsC.o
 
 
-# .c.o
+
 yascS.o: yascS.c prototypesS.h commonS.h newvar.h
 
 yascC.o: yascC.c prototypesC.h commonC.h
@@ -56,7 +63,7 @@ runS:
 
 runC:
 	clear
-	./bin/yascC.exe -s NNNN PPPP
+	./bin/yascC.exe -s ubuntu 45000
 
 #############################################################
 # Maintenance

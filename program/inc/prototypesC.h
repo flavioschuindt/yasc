@@ -17,7 +17,7 @@
 
 /*  Parses a command line and calls necessary functions to handle commands as they are found valid  *
  *  Parameters:  string from shell or from .txt                                                     *
- *  Returns:     [ number of valid commands , number of errors ]                                    */
+ *  Returns:     nothing                                                                            */
 void parse_line (char *string);
 
 
