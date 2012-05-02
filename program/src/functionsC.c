@@ -40,7 +40,7 @@ void parse_line (char *string){
 		num = (int) strtol(parameter,&endptr,0);
 
 		/* condition of over / underflow */
-		if ( errno == ERANGE ) {	/* C99 implies that if it isn't ERANGE, it's 0 */
+		if( errno == ERANGE ) {	/* C99 implies that if it isn't ERANGE, it's 0 */
 			fprintf(fout,">> Parsing error!\n>> Number out of range. Use only integers between %ld and %ld\n>> Try help for assistance.\n",LONG_MIN,LONG_MAX);
 
 		/*

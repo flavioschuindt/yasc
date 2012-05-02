@@ -27,8 +27,8 @@ LIBS = -pthread
 #DEBUG = -ggdb
 WEXTRA = -Wextra
 
-CFLAGS = -Wall $(WEXTRA) -ansi -pedantic $(DEBUG) $(LIBS) -c -I inc/ -o
-LFLAGS = -Wall $(WEXTRA) -ansi -pedantic $(DEBUG) $(LIBS) -o
+CFLAGS = -Wall $(WEXTRA) -ansi -pedantic -D_POSIX_SOURCE $(DEBUG) $(LIBS) -c -I inc/ -o
+LFLAGS = -Wall $(WEXTRA) -ansi -pedantic -D_POSIX_SOURCE $(DEBUG) $(LIBS) -o
 
 .c.o:
 	$(CC) $(CFLAGS) obj/$@ $<
@@ -59,11 +59,11 @@ functionsS.o: functionsS.c prototypesS.h commonS.h newvar.h
 # Quick Run
 runS:
 	clear
-	./bin/yascS.exe
+	./bin/yascS.exe 45000
 
 runC:
 	clear
-	./bin/yascC.exe -s ubuntu 45000
+	./bin/yascC.exe ubuntu 45000
 
 #############################################################
 # Maintenance
