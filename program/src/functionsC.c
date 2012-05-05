@@ -16,6 +16,7 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
+#include <unistd.h>
 
 #ifdef OWNER
 #undef OWNER
@@ -23,6 +24,8 @@
 #include <commonC.h>
 
 #include <prototypesC.h>
+#include <globalHeader.h>
+#include <newvar.h>
 
 
 void parse_line (char *string){
@@ -46,12 +49,12 @@ void parse_line (char *string){
 			fprintf(fout,">> Parsing error!\n>> Number out of range. Use only integers between %ld and %ld.\n>> Try help for assistance.\n",LONG_MIN,LONG_MAX);
 
 		} else if( *endptr == '\0' ) {	/* C99 implies that if it isn't ERANGE, it's 0 */
-			/* send 'D' and num *********************/
+
+			handleRequest( 'D', num );	/* communicates with server */
 
 		/* rejects number if it isn't surrounded by white-space exceptions are: '+' and '-' before the number */
 		} else if( (*endptr != '\0') && (endptr != parameter) ) {
 			fprintf(fout,">> Parsing error!\n>> Invalid number. Use only integers between %ld and %ld.\n>> Try help for assistance.\n",LONG_MIN,LONG_MAX);
-
 
 		/*
 		 * IF IT IS NOT A NUMBER
@@ -60,7 +63,7 @@ void parse_line (char *string){
 					(!strcmp(parameter,"/")) || (!strcmp(parameter,"%")) || (!strcmp(parameter,"R")) ||
 					(!strcmp(parameter,"T")) || (!strcmp(parameter,"P")) || (!strcmp(parameter,"I")) || (!strcmp(parameter,"K"))  ) {
 
-			/* make request ***************/
+			handleRequest( parameter[0], 0 );	/* communicates with server */
 
 		} else if( parameter[0] == ';' ) {	/* end of effective commands (anything past that is interpreted as comments until next NL) */
 			break;
@@ -75,15 +78,52 @@ void parse_line (char *string){
 
 		} else if( !strcmp(parameter,"help") ) {
 			fprintf(fout,">> No soup for you!\n");
-			/* open help pages *************/
+			/* open help pages                          *************		    TO DO             *************/
 
 		} else if( !strcmp(parameter,"exit") ) {
 			fprintf(fout,">> NEXT!\n\n\n");
 			exit(0);
-			/* check if there is an open session; prompt to close it *********/
+			/* check if there is an open session; prompt to close it  (how ?)        *************		    TO DO             *************/
 
 		} else {
 			fprintf(fout,">> Parsing error!\n>> Unknown command \"%s\" ignored.\n>> Try help for assistance.\n",parameter);
 		}
+	}
+}
+
+
+void handleRequest ( char Req, int Data ) {
+	unsigned int *returningData;
+	PACKAGE outPackage, inPackage;
+
+	MALL(returningData,1);
+	outPackage.msg = Req;
+	sprintf(outPackage.num,"%X",Data);
+
+	/* synchronous handling of requests; read() blocks the client until there is an answer to read */
+	write(clientSocket,(void *)&outPackage,COM_SIZE);
+	read(clientSocket,(void *)&inPackage,COM_SIZE);
+	sscanf(inPackage.num,"%X",returningData);	/* converts string (hexadecimal integer) to normal integer */
+
+	if( DBG & 1 ) {
+
+		if( Req == 'D' ) {
+			fprintf(fout, "DEBUG:\t%c%d=> : =>%c\n", Req, Data, inPackage.msg);
+
+		} else if( (Req == 'R') || (Req == 'T') || (Req == 'P') ){
+			fprintf(fout, "DEBUG:\t%c=> : =>%c%d\n", Req, inPackage.msg, *returningData);
+
+		} else {
+			fprintf(fout, "DEBUG:\t%c=> : =>%c\n", Req, inPackage.msg);
+		}
+
+	} else if( ((Req == 'R') || (Req == 'T') || (Req == 'P')) && (inPackage.msg == 'V') ) {
+		fprintf(fout, ":: %d\n", *returningData);
+
+	} else if( inPackage.msg == 'E' ) {
+		fprintf(fout, ":: Error!\n:: \"%c\" Command failed.\n", Req);
+
+	} else if( inPackage.msg == 'I' ) {
+		fprintf(fout, ":: Server error!\n:: Stack reinitialized.\n");
 	}
 }

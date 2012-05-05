@@ -21,6 +21,10 @@
 void parse_line (char *string);
 
 
+/*  Sends a command to the server; waits for answer *
+ *  Parameters:  command to be sent                 *
+ *  Returns:     nothing                            */
+void handleRequest ( char Req, int Data );
 
 
 #endif

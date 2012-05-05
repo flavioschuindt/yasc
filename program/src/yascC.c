@@ -34,12 +34,12 @@
 #define OWNER	/* owner of global variables */
 #include <commonC.h>
 #include <prototypesC.h>
-
+#include <globalHeader.h>
 
 
 int main( int argc, char *argv[] ) {
 
-	int i, f=0, clientSocket, gai_result;
+	int i, f=0, gai_result;
 	char *fileName, line[MAX_LINE];
 	time_t now;
 	struct tm *local;

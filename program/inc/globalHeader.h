@@ -7,7 +7,7 @@
  *  Flávio Schuindt     nº74570     MEEC                     *
  *  _______________________________________________________  *
  *                                                           *
- *  global macros                                            *
+ *  global Header                                            *
  *                                                           *
  *************************************************************/
 
@@ -41,3 +41,5 @@
 		printf("ERROR: could not join thread %d\t( %d of %s )\n", i, __LINE__, __FILE__); \
 	} \
 }
+
+#define COM_SIZE 9 /* (bytes); size of comunication package */

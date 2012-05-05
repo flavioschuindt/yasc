@@ -14,6 +14,11 @@
 #ifndef __NEWVAR_H__
 #define __NEWVAR_H__
 
+typedef struct package {
+	char msg;		/* message / command */
+	char num[8];	/* number or padding */
+} PACKAGE;
+
 /* Requests to be processed */
 typedef struct request {
 	unsigned char param1;	/*First byte of message*/

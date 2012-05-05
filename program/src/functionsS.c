@@ -18,7 +18,7 @@
 
 #include <prototypesS.h>
 #include <newvar.h>
-#include <globalmacros.h>
+#include <globalHeader.h>
 
 #ifdef OWNER
 #undef OWNER

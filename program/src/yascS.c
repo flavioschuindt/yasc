@@ -31,7 +31,7 @@
 
 #include <newvar.h>
 #include <prototypesS.h>
-#include <globalmacros.h>
+#include <globalHeader.h>
 
 #define OWNER	/* owner of global variables */
 #include <commonS.h>
@@ -105,9 +105,26 @@ int main( int argc, char *argv[] ) {
 
 	listen(primarySocket,SOMAXCONN);
 
-	while(1) {
+	/*while(1) {*/	/* while nº clientes menor que X */
 		clientAddr_len = sizeof(clientAddr);
 		secondarySocket = accept(primarySocket,(struct sockaddr *) &clientAddr,(socklen_t*)&clientAddr_len);
+
+/* DEMO communication */
+while(1) {
+	unsigned int *num;
+	PACKAGE outPackage, inPackage;
+
+	MALL(num,1);
+
+	read(secondarySocket,(void *)&inPackage,COM_SIZE);
+	sscanf(inPackage.num,"%X",num);
+	fprintf(stdout, "%c\t%d\n", inPackage.msg, *num);
+
+	outPackage.msg = 'V';
+	sprintf(outPackage.num,"%X",-2485224);
+	write(secondarySocket,(void *)&outPackage,COM_SIZE);
+}
+/* DEMO */
 
 		/*
 		1. write socket id to pipe
@@ -115,7 +132,7 @@ int main( int argc, char *argv[] ) {
 		3. end of while
 		*/
 
-	}
+	/*}*/
 
 
 

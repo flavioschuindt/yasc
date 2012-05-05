@@ -45,25 +45,25 @@ C: yascC.o functionsC.o
 
 
 
-yascS.o: yascS.c prototypesS.h commonS.h newvar.h
+yascS.o: yascS.c prototypesS.h commonS.h globalHeader.h newvar.h
 
-yascC.o: yascC.c prototypesC.h commonC.h
+yascC.o: yascC.c prototypesC.h commonC.h globalHeader.h
 
 
-functionsC.o: functionsC.c prototypesC.h commonC.h
+functionsC.o: functionsC.c prototypesC.h commonC.h globalHeader.h newvar.h
 
-functionsS.o: functionsS.c prototypesS.h commonS.h newvar.h
+functionsS.o: functionsS.c prototypesS.h commonS.h globalHeader.h newvar.h
 
 
 #############################################################
 # Quick Run
 runS:
 	clear
-	./bin/yascS.exe 50000 &
+	./bin/yascS.exe 50000
 
 runC:
 	clear
-	./bin/yascC.exe ubuntu 45000
+	./bin/yascC.exe ubuntu 50000
 
 #############################################################
 # Maintenance
