@@ -39,19 +39,18 @@ void parse_line (char *string){
 		errno = 0;		/* only way of checking over / underflow */
 		num = (int) strtol(parameter,&endptr,0);
 
-		/* condition of over / underflow */
-		if( errno == ERANGE ) {	/* C99 implies that if it isn't ERANGE, it's 0 */
-			fprintf(fout,">> Parsing error!\n>> Number out of range. Use only integers between %ld and %ld\n>> Try help for assistance.\n",LONG_MIN,LONG_MAX);
-
 		/*
-		 * IF IT IS A NUMBER
+		 * CHECK FOR NUMBER
 		 */
-		} else if( *endptr == '\0' ) {
+		if( errno == ERANGE ) {	/* condition of over / underflow */
+			fprintf(fout,">> Parsing error!\n>> Number out of range. Use only integers between %ld and %ld.\n>> Try help for assistance.\n",LONG_MIN,LONG_MAX);
+
+		} else if( *endptr == '\0' ) {	/* C99 implies that if it isn't ERANGE, it's 0 */
 			/* send 'D' and num *********************/
 
 		/* rejects number if it isn't surrounded by white-space exceptions are: '+' and '-' before the number */
 		} else if( (*endptr != '\0') && (endptr != parameter) ) {
-			fprintf(fout,">> Parsing error!\n>> Invalid number. Use only integers between %ld and %ld\n>> Try help for assistance.\n",LONG_MIN,LONG_MAX);
+			fprintf(fout,">> Parsing error!\n>> Invalid number. Use only integers between %ld and %ld.\n>> Try help for assistance.\n",LONG_MIN,LONG_MAX);
 
 
 		/*

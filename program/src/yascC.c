@@ -122,6 +122,8 @@ int main( int argc, char *argv[] ) {
 
 			i++;
 		}
+	} else {
+		fprintf(stderr,">> Setup error!\n>> Missing hostname and port.");
 	}
 
 	if( DBG & 1 ) {
@@ -133,7 +135,6 @@ int main( int argc, char *argv[] ) {
 	while( fgets(line,MAX_LINE,fin) != NULL ) {
 		parse_line(line);
 	}
-
 
 	return 0;
 }

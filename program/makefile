@@ -22,7 +22,7 @@ vpath %.c src/
 vpath %.h inc/
 
 CC = gcc
-# Libs: -lnsl: sockets; -pthread: threads; -lm: math
+# Libs: -pthread: threads; -lm: math
 LIBS = -pthread
 #DEBUG = -ggdb
 WEXTRA = -Wextra
@@ -59,7 +59,7 @@ functionsS.o: functionsS.c prototypesS.h commonS.h newvar.h
 # Quick Run
 runS:
 	clear
-	./bin/yascS.exe 45000
+	./bin/yascS.exe 50000 &
 
 runC:
 	clear

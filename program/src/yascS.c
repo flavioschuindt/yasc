@@ -39,9 +39,9 @@
 
 int main( int argc, char *argv[] ) {
 
-	int i, portSet, primarySocket;
+	int i, primarySocket, secondarySocket, clientAddr_len;
 	unsigned int port;
-	struct sockaddr_in serverAddr;
+	struct sockaddr_in serverAddr, clientAddr;
 	char *endptr;
 
 	/*unsigned char fbyte[5] = {'+','-','*','/','%'};
@@ -55,16 +55,16 @@ int main( int argc, char *argv[] ) {
 	/* argument parsing; setup */
 	if( argc > 1 ) {
 
-		if( (primarySocket = socket(AF_INET,SOCK_STREAM,0)) < 0 ) {
-			fprintf(stderr,">> Setup error!\n>> Failed to open socket.\n");
-			exit(-1);
-		}
-
 		errno = 0;		/* only way of checking over / underflow */
 		port = (unsigned int) strtol(argv[1],&endptr,0);
 		/* is it a number ? */
 		if( (errno == ERANGE) || ((*endptr != '\0') && (endptr != argv[1])) ) {	/* C99 implies that if it isn't ERANGE, it's 0 */
 			fprintf(stderr,">> Setup error!\n>> Missing argument <listening port>\n");
+			exit(-1);
+		}
+
+		if( (primarySocket = socket(AF_INET,SOCK_STREAM,0)) < 0 ) {
+			fprintf(stderr,">> Setup error!\n>> Failed to open socket.\n");
 			exit(-1);
 		}
 
@@ -74,10 +74,9 @@ int main( int argc, char *argv[] ) {
 		serverAddr.sin_port = htons(port);
 
 		if( bind(primarySocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0 ) {
-			fprintf(stderr,">> Setup error!\n>> ");
+			fprintf(stderr,">> Setup error!\n>> Failed to bind socket.\n");
 			exit(-1);
 		}
-		portSet = 1;
 
 		i = 2;
 		while( i < argc ) {
@@ -93,11 +92,11 @@ int main( int argc, char *argv[] ) {
 
 			i++;
 		}
+
+	} else {
+		fprintf(stderr,">> Setup error!\n>> Missing argument <listening port>\n");
 	}
 
-	if( portSet == 0 ) {
-		fprintf(stderr,">> Setup error!\n>> Indicate a listening port.\n");
-	}
 	if( DBG & 1 ) {
 		fprintf(stdout,DBG_ON);
 	}
@@ -106,23 +105,17 @@ int main( int argc, char *argv[] ) {
 
 	listen(primarySocket,SOMAXCONN);
 
-/*	while(1) {
-		clientAddr_len = sizeof(cliente_addr);
-		secondarySocket = accept(primarySocket,(struct sockaddr *) &clientAddr,(socklen_t*)&cliente_addr_len);
-		if( (PID = fork()) < 0 ) {
-			printf("Erro no pedido %d\n",numberOfClients);
-			exit(-1);
-		}
-		if( PID == 0 ){
-			close(socket_primario);
-			if( read(secondarySocket, &ESTRUTURA_COMUNICAÇAO, sizeof(ESTRUTURA_COMUNICAÇAO)) < 0 ) {
-			}
-			if( write(secondarySocket, (void*)&ESTRUTURA_COMUNICAÇAO, sizeof(ESTRUTURA_COMUNICAÇAO)) < 0 ) {
-			}
-		}
-		close(socket_secundario);
-		numberOfClients ++;
-	}*/
+	while(1) {
+		clientAddr_len = sizeof(clientAddr);
+		secondarySocket = accept(primarySocket,(struct sockaddr *) &clientAddr,(socklen_t*)&clientAddr_len);
+
+		/*
+		1. write socket id to pipe
+		2. signal thread to fetch socket id
+		3. end of while
+		*/
+
+	}
 
 
 
