@@ -34,7 +34,6 @@
 #define OWNER	/* owner of global variables */
 #include <commonC.h>
 #include <prototypesC.h>
-#include <globalHeader.h>
 
 
 int main( int argc, char *argv[] ) {

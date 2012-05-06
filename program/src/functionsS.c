@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include <prototypesS.h>
 #include <newvar.h>
@@ -141,4 +142,24 @@ void *processRequestsListTask(void *data)
 			 	pthread_cond_wait(&got_request, &request_mutex);
 		}
 	}
+}
+
+void *handleClient ( void *fd ) {
+	int FD = (int) fd;
+
+	while(1) {
+		unsigned int *num;
+		PACKAGE outPackage, inPackage;
+
+		MALL(num,1);
+
+		read(FD,(void *)&inPackage,COM_SIZE);
+		sscanf(inPackage.num,"%X",num);
+		fprintf(stdout, "%c\t%d\n", inPackage.msg, *num);
+
+		outPackage.msg = 'V';
+		sprintf(outPackage.num,"%X",-2485224);
+		write(FD,(void *)&outPackage,COM_SIZE);
+	}
+
 }

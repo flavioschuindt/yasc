@@ -109,20 +109,16 @@ void handleRequest ( char Req, int Data ) {
 
 		if( Req == 'D' ) {
 			fprintf(fout, "DEBUG:\t%c%d=> : =>%c\n", Req, Data, inPackage.msg);
-
 		} else if( (Req == 'R') || (Req == 'T') || (Req == 'P') ){
 			fprintf(fout, "DEBUG:\t%c=> : =>%c%d\n", Req, inPackage.msg, *returningData);
-
 		} else {
 			fprintf(fout, "DEBUG:\t%c=> : =>%c\n", Req, inPackage.msg);
 		}
 
 	} else if( ((Req == 'R') || (Req == 'T') || (Req == 'P')) && (inPackage.msg == 'V') ) {
 		fprintf(fout, ":: %d\n", *returningData);
-
 	} else if( inPackage.msg == 'E' ) {
 		fprintf(fout, ":: Error!\n:: \"%c\" Command failed.\n", Req);
-
 	} else if( inPackage.msg == 'I' ) {
 		fprintf(fout, ":: Server error!\n:: Stack reinitialized.\n");
 	}

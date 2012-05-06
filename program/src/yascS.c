@@ -47,8 +47,8 @@ int main( int argc, char *argv[] ) {
 	/*unsigned char fbyte[5] = {'+','-','*','/','%'};
 	unsigned char sbyte[10] = {'0','1','2','3','4','5','6','7','8','9'};
 	REQUEST *req;
-	int r1=0, r2=0;
-	pthread_t *threads;*/
+	int r1=0, r2=0;*/
+	pthread_t *threads;
 
 	DBG = 0;
 
@@ -105,26 +105,20 @@ int main( int argc, char *argv[] ) {
 
 	listen(primarySocket,SOMAXCONN);
 
-	/*while(1) {*/	/* while nº clientes menor que X */
+/* DEMO communication */
+	MALL(threads,WORKERS);
+
+	i=1;
+	while( i < WORKERS ) {	/* while nº clientes menor que X */
 		clientAddr_len = sizeof(clientAddr);
 		secondarySocket = accept(primarySocket,(struct sockaddr *) &clientAddr,(socklen_t*)&clientAddr_len);
 
-/* DEMO communication */
-while(1) {
-	unsigned int *num;
-	PACKAGE outPackage, inPackage;
+		pthread_create(&threads[i], NULL, handleClient, (void*)secondarySocket);
 
-	MALL(num,1);
+		i++;
 
-	read(secondarySocket,(void *)&inPackage,COM_SIZE);
-	sscanf(inPackage.num,"%X",num);
-	fprintf(stdout, "%c\t%d\n", inPackage.msg, *num);
 
-	outPackage.msg = 'V';
-	sprintf(outPackage.num,"%X",-2485224);
-	write(secondarySocket,(void *)&outPackage,COM_SIZE);
-}
-/* DEMO */
+
 
 		/*
 		1. write socket id to pipe
@@ -132,8 +126,8 @@ while(1) {
 		3. end of while
 		*/
 
-	/*}*/
-
+	}
+/* DEMO */
 
 
 

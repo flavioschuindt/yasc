@@ -40,4 +40,6 @@ int mult (int a, int b);
 
 float divide (int a, int b);
 
+void *handleClient ( void *fd );
+
 #endif
