@@ -31,3 +31,4 @@
 EXTERN int DBG;				/* Flag for Debug mode; 'ON' for DBG odd, 'OFF' for DBG even */
 EXTERN FILE *fout;			/* Output file descriptor */
 EXTERN int clientSocket;	/* File descriptor for the client socket */
+EXTERN struct addrinfo *server, *pntAddr;

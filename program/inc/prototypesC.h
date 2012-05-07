@@ -26,5 +26,14 @@ void parse_line (char *string);
  *  Returns:     nothing                            */
 void handleRequest ( char Req, int Data );
 
+/*  Tries to establish connection; waits for confirmation *
+ *  Parameters:  nothing                                  *
+ *  Returns:     nothing                                  */
+void init_session ();
+
+/*  Terminates connection; doesn't wait for server confirmation *
+ *  Parameters:  nothing                                        *
+ *  Returns:     nothing                                        */
+void end_session ();
 
 #endif

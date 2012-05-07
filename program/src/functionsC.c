@@ -17,6 +17,10 @@
 #include <errno.h>
 #include <limits.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <netinet/in.h>
 
 #ifdef OWNER
 #undef OWNER
@@ -50,7 +54,7 @@ void parse_line (char *string){
 
 		} else if( *endptr == '\0' ) {	/* C99 implies that if it isn't ERANGE, it's 0 */
 
-			handleRequest( 'D', num );	/* communicates with server */
+			handleRequest( 'D', num );	/* communicates with server; 'D' command is implicit whenever a number is detected */
 
 		/* rejects number if it isn't surrounded by white-space exceptions are: '+' and '-' before the number */
 		} else if( (*endptr != '\0') && (endptr != parameter) ) {
@@ -61,9 +65,15 @@ void parse_line (char *string){
 		 */
 		} else if(  (!strcmp(parameter,"+")) || (!strcmp(parameter,"-")) || (!strcmp(parameter,"*")) ||
 					(!strcmp(parameter,"/")) || (!strcmp(parameter,"%")) || (!strcmp(parameter,"R")) ||
-					(!strcmp(parameter,"T")) || (!strcmp(parameter,"P")) || (!strcmp(parameter,"I")) || (!strcmp(parameter,"K"))  ) {
+					(!strcmp(parameter,"T")) || (!strcmp(parameter,"P")) ) {
 
-			handleRequest( parameter[0], 0 );	/* communicates with server */
+			handleRequest( parameter[0], 0 );	/* communicates with server; Data=0 for padding */
+
+		} else if( !strcmp(parameter,"I") ) {
+			init_session();	/* establishes connection with server */
+
+		} else if( !strcmp(parameter,"K") ) {
+			end_session();	/* ends connection with server */
 
 		} else if( parameter[0] == ';' ) {	/* end of effective commands (anything past that is interpreted as comments until next NL) */
 			break;
@@ -105,6 +115,7 @@ void handleRequest ( char Req, int Data ) {
 	read(clientSocket,(void *)&inPackage,COM_SIZE);
 	sscanf(inPackage.num,"%X",returningData);	/* converts string (hexadecimal integer) to normal integer */
 
+
 	if( DBG & 1 ) {
 
 		if( Req == 'D' ) {
@@ -121,5 +132,54 @@ void handleRequest ( char Req, int Data ) {
 		fprintf(fout, ":: Error!\n:: \"%c\" Command failed.\n", Req);
 	} else if( inPackage.msg == 'I' ) {
 		fprintf(fout, ":: Server error!\n:: Stack reinitialized.\n");
+	}
+
+}
+
+
+void init_session () {
+	PACKAGE outPackage, inPackage;
+
+	for( pntAddr = server; pntAddr != NULL; pntAddr = pntAddr->ai_next ) {
+
+		if( connect(clientSocket, (struct sockaddr *)pntAddr->ai_addr, pntAddr->ai_addrlen) != -1 ) {
+			break;
+
+		} else if(pntAddr->ai_next==NULL){
+			fprintf(stderr,">> Error!\n>> Failed to establish connection\n");
+		}
+
+	}
+
+	outPackage.msg = 'I';
+	sprintf(outPackage.num,"%X",0);	/* padding */
+
+	write(clientSocket,(void *)&outPackage,COM_SIZE);
+	read(clientSocket,(void *)&inPackage,COM_SIZE);
+
+	if( DBG & 1 ) {
+		fprintf(fout, "DEBUG:\tI=> : =>%c\n", inPackage.msg);
+
+	}  else if( inPackage.msg == 'E' ) {							/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+		fprintf(fout, ":: Error!\n:: Rejected connection.\n");		/* probably doesn't make sense to leave these else's here; dependes on server implementation */
+
+	} else if( inPackage.msg == 'I' ) {
+		fprintf(fout, ":: Server error!\n");
+	}
+}
+
+
+void end_session () {
+	PACKAGE outPackage;
+
+	outPackage.msg = 'K';
+	sprintf(outPackage.num,"%X",0);	/* padding */
+
+	write(clientSocket,(void *)&outPackage,COM_SIZE);
+
+/* close socket */
+
+	if( DBG & 1 ) {
+		fprintf(fout, "DEBUG:\tK=>\n" );
 	}
 }

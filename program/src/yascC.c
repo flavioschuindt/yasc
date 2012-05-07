@@ -42,7 +42,7 @@ int main( int argc, char *argv[] ) {
 	char *fileName, line[MAX_LINE];
 	time_t now;
 	struct tm *local;
-	struct addrinfo hints, *server, *pntAddr;
+	struct addrinfo hints;
 
 	FILE *fin=stdin;	/* defaults to shell */
 	fout = stdout;		/* defaults to shell */
@@ -66,15 +66,6 @@ int main( int argc, char *argv[] ) {
 		if( (gai_result = getaddrinfo(argv[1], argv[2],&hints,&server)) != 0 ) {
 			fprintf(stderr,">> Setup error!\n>> %s\n", gai_strerror(gai_result));
 			exit(-1);
-		}
-
-		for( pntAddr = server; pntAddr != NULL; pntAddr = pntAddr->ai_next ) {
-			if( connect(clientSocket, (struct sockaddr *)pntAddr->ai_addr, pntAddr->ai_addrlen) != -1 ) {
-				break;
-			} else if(pntAddr->ai_next==NULL){
-				fprintf(stderr,">> Setup error!\n>> Failed to establish connection\n");
-				exit(-1);
-			}
 		}
 
 		i = 3;
