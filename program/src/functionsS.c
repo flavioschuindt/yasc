@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include <prototypesS.h>
 #include <newvar.h>
@@ -144,8 +145,13 @@ void *processRequestsListTask(void *data)
 	}
 }
 
+void brokenPipeHandler(int signalNumber){
+	printf("Recebi o sinal %d e estou vivo ainda xP",signalNumber);
+}
+
 void *handleClient ( void *fd ) {
 	int FD = (int) fd;
+	signal(SIGPIPE,brokenPipeHandler);
 
 	while(1) {
 		unsigned int *num;
