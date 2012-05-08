@@ -43,17 +43,11 @@ int main( int argc, char *argv[] ) {
 	unsigned int port;
 	struct sockaddr_in serverAddr, clientAddr;
 	char *endptr;
-
-/*
-	REQUEST *req;
-	int r1=0, r2=0;*/
 	pthread_t poolManager, serverManager;
 
 
 	/* >>> MASTER thread <<< */
-
-	pthread_mutex_init(&p_mutex, NULL);
-	pthread_cond_init(&p_cond_var,NULL);
+	createInitialServerConditions();
 
 	/* argument parsing; setup */
 	if( argc == 2 ) {
@@ -62,12 +56,12 @@ int main( int argc, char *argv[] ) {
 		port = (unsigned int) strtol(argv[1],&endptr,0);
 		/* is it a number ? */
 		if( (errno == ERANGE) || ((*endptr != '\0') && (endptr != argv[1])) ) {	/* C99 implies that if it isn't ERANGE, it's 0 */
-			fprintf(stderr,">> Setup error!\n>> Missing argument <listening port>\n");
+			fprintf(stderr,">> Setup error!\n>> Missing argument <listening port>.\n>> Aborting.\n");
 			exit(-1);
 		}
 
 		if( (primarySocket = socket(AF_INET,SOCK_STREAM,0)) < 0 ) {
-			fprintf(stderr,">> Setup error!\n>> Failed to open socket.\n");
+			fprintf(stderr,">> Setup error!\n>> Failed to open socket.\n>> Aborting.\n");
 			exit(-1);
 		}
 
@@ -77,18 +71,18 @@ int main( int argc, char *argv[] ) {
 		serverAddr.sin_port = htons(port);
 
 		if( bind(primarySocket, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0 ) {
-			fprintf(stderr,">> Setup error!\n>> Failed to bind socket.\n");
+			fprintf(stderr,">> Setup error!\n>> Failed to bind socket.\n>> Aborting.\n");
 			exit(-1);
 		}
 
 	} else {
-		fprintf(stderr,">> Setup error!\n>> Wrong arguments. Aborting.\n");
+		fprintf(stderr,">> Setup error!\n>> Too many arguments.\n>> Aborting.\n");
 		exit(-1);
 	}
 
 
 
-/** Services *******************************************/
+/** Launch Services ************************************/
 	/* >>> ADMIN interface <<< */
 	PTH_CREATE(&serverManager, parse_line, NULL);
 	/* >>> POOL MANAGER <<< */
@@ -98,60 +92,22 @@ int main( int argc, char *argv[] ) {
 
 	/* listens for incoming connections; and accepts them */
 	listen(primarySocket,SOMAXCONN);
-/*	while( 1 ){
 
-		if( $Struct.numbOfClients < MAX_WORKERS ) {
+	while(1) {
+
+		if( clients_desc->count < MAX_CLIENTS ) {
 			clientAddr_len = sizeof(clientAddr);
-			* secondarySocket is only a temporary holder of the file descriptor *
+			/* secondarySocket is only a temporary holder of the file descriptor */
 			secondarySocket = accept(primarySocket,(struct sockaddr *) &clientAddr,(socklen_t*)&clientAddr_len);
 
-			1. write socket id to $Struct
-			2. signal thread to fetch socket id
+			add_client(secondarySocket);
+			pthread_cond_signal( &p_cond_var );
 
+		} else {		/* enough clients for now */
+			pause();
 		}
 	}
-*/
 
-
-
-/*
-	srand(time(NULL));
-
-	MALL(req,1)
-	createInitialServerConditions();
-
-	MALL(threads,WORKERS)
-
-	for (i=0; i<WORKERS; i++) {
-		threads[i] = i;
-		pthread_create(&threads[i], NULL, processRequestsListTask, (void*)&threads[i]);
-    }
-
-	for (i = 0; i<10000; i++){
-
-		r1 = rand () % 5;
-		r2 = rand () % 10;
-
-		addRequest(fbyte[r1],sbyte[r2],&request_mutex,&got_request);
-		*if (rand() > 3*(RAND_MAX/4)) { used for wasting time. why?
-	    	delay.tv_sec = 0;
-	    	delay.tv_nsec = 10;
-	    	nanosleep(&delay, NULL);
-		}*
-	}
-	sleep(5);
-	printf("\nOK. Done!\n");
-	*printf("Num Req: %d\n",req_desc->num_requests);
-
-	req = getRequest(&request_mutex);*
-
-
-	*MALL(req,1)
-	req->param1 = 'X';
-	req->param2 = &data[3];
-
-	printf("Parametro 1: %c\n",req->param1);
-	printf("Parametro 2: %s\n",req->param2);*/
 
 	return 0;
 

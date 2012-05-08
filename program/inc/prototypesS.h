@@ -19,34 +19,6 @@
 /* Create initial server conditions updating the descriptor node */
 void createInitialServerConditions();
 
-/*Get and Update the first client to be served in the list of FDs*/
-int getFDAndUpdateNextFD();
-
-/*Remove a node (client) from the FDs List*/
-void removeFD(int FDToBeSearched);
-
-/*Add a node(client) in the FDs List*/
-void addFD(int FDToBeAdded);
-
-/* The 'hard work' is done here. */
-void handleParticularFD(int fd);
-
-/* Access requests' list and process a specific request got from the list */
-void *processFDsListTask(void *data);
-
-/* Math module functions */
-int add (int a, int b);
-int sub (int a, int b);
-int mult (int a, int b);
-int divide (int a, int b);
-int remainder (int a, int b);
-
-
-/*  slave work; handles requests from client  *
- *  Parameters:  socket FD and stack pointer  *
- *  Returns:     nothing                      */
-void *handle_client ( void *fd );
-
 
 /*  parses command line; admin interface      *
  *  Parameters:  nothing                      *
@@ -58,5 +30,37 @@ void *parse_line ();
  *  Parameters:  nothing                      *
  *  Returns:     nothing                      */
 void *manage_pool ();
+
+
+/*Get and Update the first client to be served in the list of FDs*/
+int get_client ();
+
+/*Add a node(client) in the FDs List*/
+void add_client ( int FDToBeAdded );
+
+/*Remove a node (client) from the FDs List*/
+void remove_client ( int FDToBeSearched );
+
+/*  creates a stack associated with a particular socket (i.e. client) *
+ *  Parameters:  nothing                                              *
+ *  Returns:     nothing                                              */
+void create_stack ( int fd );
+
+/* Access requests' list and process a specific request got from the list */
+void *processFDsListTask();
+
+/*  slave work; handles requests from client  *
+ *  Parameters:  socket FD and stack pointer  *
+ *  Returns:     nothing                      */
+void handle_client ( int fd );
+
+
+/* Math module functions */
+int add (int a, int b);
+int sub (int a, int b);
+int mult (int a, int b);
+int divide (int a, int b);
+int remainder (int a, int b);
+
 
 #endif

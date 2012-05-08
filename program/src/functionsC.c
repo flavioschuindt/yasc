@@ -113,30 +113,43 @@ void handleRequest ( char Req, int Data ) {
 	sprintf(outPackage.num,"%X",Data);
 
 	/* synchronous handling of requests; read() blocks the client until there is an answer to read */
-/* !!!!!!!!!!!!!! errno = 0; check for error after write() */
+	errno = 0;
 	write(clientSocket,(void *)&outPackage,COM_SIZE);
-	read(clientSocket,(void *)&inPackage,COM_SIZE);
-	sscanf(inPackage.num,"%X", (unsigned int *) returningData);	/* converts string (hexadecimal integer) to normal integer */
-
-
-	if( DBG & 1 ) {
-
-		if( Req == 'D' ) {
-			fprintf(fout, "DEBUG:\t%c%d=> : =>%c\n", Req, Data, inPackage.msg);
-		} else if( (Req == 'R') || (Req == 'T') || (Req == 'P') ){
-			fprintf(fout, "DEBUG:\t%c=> : =>%c%d\n", Req, inPackage.msg, *returningData);
+	if( (errno == EPIPE) || (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ECONNRESET) ){
+		shutdown(clientSocket, SHUT_RDWR);
+		close(clientSocket);
+		fprintf(fout, ">> ERROR!\n>> No server connection.\n>> Try 'I'.\n");
+	} else {
+		errno = 0;
+		read(clientSocket,(void *)&inPackage,COM_SIZE);
+		if( (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ENOTCONN) || (errno == ECONNRESET) ){
+			shutdown(clientSocket, SHUT_RDWR);
+			close(clientSocket);
+			fprintf(fout, ">> ERROR!\n>> No server connection.\n>> Try 'I'.\n");
+		} else if( errno == ETIMEDOUT ){
+			shutdown(clientSocket, SHUT_RDWR);
+			close(clientSocket);
+			fprintf(fout, ">> ERROR!\n>> Timed out.\n>> Try again.\n");
 		} else {
-			fprintf(fout, "DEBUG:\t%c=> : =>%c\n", Req, inPackage.msg);
+			sscanf(inPackage.num,"%X", (unsigned int *) returningData);	/* converts string (hexadecimal integer) to normal integer */
+
+			if( DBG & 1 ) {
+				if( Req == 'D' ) {
+					fprintf(fout, "DEBUG:\t%c%d=> : =>%c\n", Req, Data, inPackage.msg);
+				} else if( (Req == 'R') || (Req == 'T') || (Req == 'P') ){
+					fprintf(fout, "DEBUG:\t%c=> : =>%c%d\n", Req, inPackage.msg, *returningData);
+				} else {
+					fprintf(fout, "DEBUG:\t%c=> : =>%c\n", Req, inPackage.msg);
+				}
+			} else if( ((Req == 'R') || (Req == 'T') || (Req == 'P')) && (inPackage.msg == 'V') ) {
+				fprintf(fout, ":: %d\n", *returningData);
+			} else if( inPackage.msg == 'E' ) {
+				fprintf(fout, ":: Error!\n:: \"%c\" Command failed.\n", Req);
+			} else if( inPackage.msg == 'I' ) {
+				fprintf(fout, ":: Server error!\n:: Stack reinitialized.\n");
+			}
 		}
-
-	} else if( ((Req == 'R') || (Req == 'T') || (Req == 'P')) && (inPackage.msg == 'V') ) {
-		fprintf(fout, ":: %d\n", *returningData);
-	} else if( inPackage.msg == 'E' ) {
-		fprintf(fout, ":: Error!\n:: \"%c\" Command failed.\n", Req);
-	} else if( inPackage.msg == 'I' ) {
-		fprintf(fout, ":: Server error!\n:: Stack reinitialized.\n");
 	}
-
 }
 
 
@@ -176,18 +189,29 @@ void init_session () {
 	outPackage.msg = 'I';
 	sprintf(outPackage.num,"%X",0);	/* padding */
 
-/* !!!!!!!!!!!! errno = 0; check for error after write() */
+	errno = 0;
 	write(clientSocket,(void *)&outPackage,COM_SIZE);
-	read(clientSocket,(void *)&inPackage,COM_SIZE);
+	if( (errno == EPIPE) || (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ECONNRESET) ){
+		shutdown(clientSocket, SHUT_RDWR);
+		close(clientSocket);
+		fprintf(fout, ">> ERROR!\n>> No server connection.\n>> Try again.\n");
+	} else {
+		read(clientSocket,(void *)&inPackage,COM_SIZE);
+		if( (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ENOTCONN) || (errno == ECONNRESET) ){
+			shutdown(clientSocket, SHUT_RDWR);
+			close(clientSocket);
+			fprintf(fout, ">> ERROR!\n>> No server connection.\n>> Try again.\n");
+		} else {
+			if( DBG & 1 ) {
+				fprintf(fout, "DEBUG:\tI=> : =>%c\n", inPackage.msg);
 
-	if( DBG & 1 ) {
-		fprintf(fout, "DEBUG:\tI=> : =>%c\n", inPackage.msg);
+			}  else if( inPackage.msg == 'E' ) {							/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+				fprintf(fout, ":: Error!\n:: Rejected connection.\n");		/* probably doesn't make sense to leave these else's here; dependes on server implementation */
 
-	}  else if( inPackage.msg == 'E' ) {							/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-		fprintf(fout, ":: Error!\n:: Rejected connection.\n");		/* probably doesn't make sense to leave these else's here; dependes on server implementation */
-
-	} else if( inPackage.msg == 'I' ) {
-		fprintf(fout, ":: Server error!\n");
+			} else if( inPackage.msg == 'I' ) {
+				fprintf(fout, ":: Server error!\n");
+			}
+		}
 	}
 }
 
@@ -199,11 +223,12 @@ void end_session () {
 	outPackage.msg = 'K';
 	sprintf(outPackage.num,"%X",0);	/* padding */
 
-/* !!!!!!!!!!!!!!!! errno = 0; check for error after write() */
+	errno = 0;
 	write(clientSocket,(void *)&outPackage,COM_SIZE);
-	if( errno == EPIPE ){
-
-
+	if( (errno == EPIPE) || (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ECONNRESET) ){
+		shutdown(clientSocket, SHUT_RDWR);
+		close(clientSocket);
+		fprintf(fout, ">> ERROR!\n>> Failed to contact server.\n>> Closing socket anyway.\n");
 	}
 
 	shutdown(clientSocket, SHUT_WR);
