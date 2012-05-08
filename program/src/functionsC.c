@@ -51,7 +51,7 @@ void parse_line (char *string){
 		 * CHECK FOR NUMBER
 		 */
 		if( errno == ERANGE ) {	/* condition of over / underflow */
-			fprintf(fout,">> Parsing error!\n>> Number out of range. Use only integers between %ld and %ld.\n>> Try help for assistance.\n",LONG_MIN,LONG_MAX);
+			fprintf(fout,":: Parsing error!\n:: Number out of range. Use only integers between %ld and %ld.\n:: Try help for assistance.\n",LONG_MIN,LONG_MAX);
 
 		} else if( *endptr == '\0' ) {	/* C99 implies that if it isn't ERANGE, it's 0 */
 
@@ -82,22 +82,31 @@ void parse_line (char *string){
 		} else if( !strcmp(parameter,"G") ) {
 			DBG++;		/* test is done with bitwise AND; true for DBG odd, false for even */
 			if( DBG & 1 ) {
-				fprintf(fout,">> Debug mode ON\n");
+				fprintf(fout,":: Debug mode ON\n");
 			} else {
-				fprintf(fout,">> Debug mode OFF\n");
+				fprintf(fout,":: Debug mode OFF\n");
 			}
 
-		} else if( !strcmp(parameter,"help") ) {
-			fprintf(fout,">> No soup for you!\n");
+		} else if( !strcmp(parameter,"HELP") ) {
+			FILE *helpFile;
+			char line[MAX_LINE];
+			helpFile = fopen("./doc/ClientHelpFile.txt","r");
+			if( helpFile == NULL ) {
+				fprintf(fout,":: Error!\n:: Can't open help file.\n:: Check your working directory.\n");
+			} else {
+				while( fgets(line,MAX_LINE,helpFile) != NULL ) {
+					fprintf(fout,"%s",line);
+				}
+			}
 			/* open help pages                          *************		    TO DO             *************/
 
-		} else if( !strcmp(parameter,"exit") ) {
-			fprintf(fout,">> NEXT!\n\n\n");
+		} else if( !strcmp(parameter,"EXIT") ) {
+			fprintf(fout,":: NEXT!\n\n\n");
 			exit(0);
 			/* check if there is an open session; prompt to close it  (how ?)        *************		    TO DO             *************/
 
 		} else {
-			fprintf(fout,">> Parsing error!\n>> Unknown command \"%s\" ignored.\n>> Try help for assistance.\n",parameter);
+			fprintf(fout,":: Parsing error!\n:: Unknown command \"%s\" ignored.\n:: Try HELP for assistance.\n",parameter);
 		}
 	}
 }
@@ -118,18 +127,18 @@ void handleRequest ( char Req, int Data ) {
 	if( (errno == EPIPE) || (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ECONNRESET) ){
 		shutdown(clientSocket, SHUT_RDWR);
 		close(clientSocket);
-		fprintf(fout, ">> ERROR!\n>> No server connection.\n>> Try 'I'.\n");
+		fprintf(fout, ">> Error!\n>> No server connection.\n>> Try 'I'.\n");
 	} else {
 		errno = 0;
 		read(clientSocket,(void *)&inPackage,COM_SIZE);
 		if( (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ENOTCONN) || (errno == ECONNRESET) ){
 			shutdown(clientSocket, SHUT_RDWR);
 			close(clientSocket);
-			fprintf(fout, ">> ERROR!\n>> No server connection.\n>> Try 'I'.\n");
+			fprintf(fout, ">> Error!\n>> No server connection.\n>> Try 'I'.\n");
 		} else if( errno == ETIMEDOUT ){
 			shutdown(clientSocket, SHUT_RDWR);
 			close(clientSocket);
-			fprintf(fout, ">> ERROR!\n>> Timed out.\n>> Try again.\n");
+			fprintf(fout, ">> Error!\n>> Timed out.\n>> Try again.\n");
 		} else {
 			sscanf(inPackage.num,"%X", (unsigned int *) returningData);	/* converts string (hexadecimal integer) to normal integer */
 
@@ -194,13 +203,13 @@ void init_session () {
 	if( (errno == EPIPE) || (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ECONNRESET) ){
 		shutdown(clientSocket, SHUT_RDWR);
 		close(clientSocket);
-		fprintf(fout, ">> ERROR!\n>> No server connection.\n>> Try again.\n");
+		fprintf(fout, ">> Error!\n>> No server connection.\n>> Try again.\n");
 	} else {
 		read(clientSocket,(void *)&inPackage,COM_SIZE);
 		if( (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ENOTCONN) || (errno == ECONNRESET) ){
 			shutdown(clientSocket, SHUT_RDWR);
 			close(clientSocket);
-			fprintf(fout, ">> ERROR!\n>> No server connection.\n>> Try again.\n");
+			fprintf(fout, ">> Error!\n>> No server connection.\n>> Try again.\n");
 		} else {
 			if( DBG & 1 ) {
 				fprintf(fout, "DEBUG:\tI=> : =>%c\n", inPackage.msg);
@@ -228,7 +237,7 @@ void end_session () {
 	if( (errno == EPIPE) || (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ECONNRESET) ){
 		shutdown(clientSocket, SHUT_RDWR);
 		close(clientSocket);
-		fprintf(fout, ">> ERROR!\n>> Failed to contact server.\n>> Closing socket anyway.\n");
+		fprintf(fout, ">> Error!\n>> Failed to contact server.\n>> Closing socket anyway.\n");
 	}
 
 	shutdown(clientSocket, SHUT_WR);
