@@ -81,14 +81,14 @@ int main( int argc, char *argv[] ) {
 	}
 
 
-
 /** Launch Services ************************************/
 	/* >>> ADMIN interface <<< */
 	PTH_CREATE(&serverManager, parse_line, NULL);
+	/*pthread_create(&serverManager, NULL, parse_line, NULL);*/
 	/* >>> POOL MANAGER <<< */
+	/*pthread_create(&poolManager, NULL, manage_pool, NULL);*/
 	PTH_CREATE(&poolManager, manage_pool, NULL);
 /*******************************************************/
-
 
 	/* listens for incoming connections; and accepts them */
 	listen(primarySocket,SOMAXCONN);
@@ -101,7 +101,6 @@ int main( int argc, char *argv[] ) {
 			secondarySocket = accept(primarySocket,(struct sockaddr *) &clientAddr,(socklen_t*)&clientAddr_len);
 
 			add_client(secondarySocket);
-			pthread_cond_signal( &p_cond_var );
 
 		} else {		/* enough clients for now */
 			pause();

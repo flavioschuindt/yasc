@@ -51,7 +51,7 @@ void *parse_line () {
 	int caret=0;
 	char line[MAX_LINE], parameter[MAX_LINE];	/* if parameter is set as smaller than MAX_LINE, it is necessary to implement buffer overrun protection !!! */
 	char *remainingString;
-
+	printf("Ok, to no parse line...");
 	while( fgets(line,MAX_LINE,stdin) != NULL ) {
 
 		remainingString = line;
@@ -75,12 +75,12 @@ void *parse_line () {
 }
 
 
-void *manage_pool () {
+void* manage_pool () {
 	int i;
 	pthread_t *slaves;
 	MALL(slaves,MAX_WORKERS);	/* avoids dynamic allocation by having always the maximum size */
 
-	i=1;
+	i=0;
 	while( i < MIN_WORKERS ) {
 
 		PTH_CREATE(&slaves[i], processFDsListTask, NULL);
@@ -189,7 +189,7 @@ void remove_client ( int FDToBeSearched ) {			/* !!!!!!!!!!!!!!!! needs to be re
 /*}*/
 
 
-void *processFDsListTask() {
+void* processFDsListTask() {
 	int fd;
 
 	pthread_mutex_lock(&p_mutex);
@@ -209,6 +209,7 @@ void *processFDsListTask() {
 				pthread_mutex_lock(&p_mutex);
 			}
 		} else {
+			printf("Ninguém no server, waiting...");
 			/*There is no FD in the FDs' list.
 			So, we use condition variables to lock this specific thread and force it to wait until a new FD arrives
 			It's important to note that when we use pthread_cond_wait the thread running at this point will
