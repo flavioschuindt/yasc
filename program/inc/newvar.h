@@ -19,20 +19,21 @@ typedef struct package {
 	char num[8];	/* number or padding */
 } PACKAGE;
 
-/* Requests to be processed */
-typedef struct request {
-	unsigned char param1;	/*First byte of message*/
-	unsigned char param2;	/*Second byte of message*/
-	/* client ID; some sort of stack identification; maybe a pointer to the appropriate stack*/
-	struct request *next;	/*It's a linked list of requests, so we need to point to the next*/
-} REQUEST;
+/* clients whose sessions is already opened */
+typedef struct fd {
+	int FD; /*socket for a specific client*/
+	struct fd *next;
+	struct fd *previous;
+} FD;
 
-/* Requests state */
-typedef struct requests_descriptor {
-	REQUEST *first;
-	REQUEST *last;
-	int num_requests;
-} REQUESTS_DESCRIPTOR;
+/* A descriptor to control the "ring buffer", containing a pointer to the next client to be served and a counter that represents
+   the total number of clients with session opened with the server*/
+typedef struct fds_descriptor {
+	FD *first; /*This is the first client with session already opened*/
+	FD *last; /*This is the last client with session already opened*/
+	FD *next; /*This is the next client to be served*/
+	int count;
+} FDs_DESCRIPTOR;
 
 /* Operand Stack; one per client */
 typedef struct stack_element {

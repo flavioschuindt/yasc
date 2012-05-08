@@ -29,8 +29,8 @@
 /* Global Variables; remember to initialize */
 
 EXTERN int DBG;			/* Flag for Debug mode; 'ON' for DBG odd, 'OFF' for DBG even */
-EXTERN REQUESTS_DESCRIPTOR req_desc;
+EXTERN FDs_DESCRIPTOR *fds_desc;
 EXTERN STACK_DESCRIPTOR stack_desc;
 
-EXTERN pthread_mutex_t request_mutex;	/* MUTEX to control access to protected resources */
-EXTERN pthread_cond_t  got_request;		/* global condition variable for our program */
+EXTERN pthread_mutex_t p_mutex;	/* MUTEX to control access to protected resources */
+EXTERN pthread_cond_t  p_cond_var; /* global condition variable for our program */

@@ -19,17 +19,20 @@
 /* Create initial server conditions updating the descriptor node */
 void createInitialServerConditions();
 
-/* Create a request, link it to the requests linked list and update number of requests */
-void addRequest(unsigned char param1, unsigned char param2, pthread_mutex_t *p_mutex, pthread_cond_t *p_cond_var);
+/*Get and Update the first client to be served in the list of FDs*/
+int getFDAndUpdateNextFD();
 
-/* Get the first request on the list and returns it */
-REQUEST *getRequest(pthread_mutex_t *p_mutex);
+/*Remove a node (client) from the FDs List*/
+void removeFD(int FDToBeSearched);
 
-/* The 'hard work' is done here. Parse the command bytes and execute the operations needed. */
-void handleParticularRequest(REQUEST *req);
+/*Add a node(client) in the FDs List*/
+void addFD(int FDToBeAdded);
+
+/* The 'hard work' is done here. */
+void handleParticularFD(int fd);
 
 /* Access requests' list and process a specific request got from the list */
-void *processRequestsListTask(void *data);
+void *processFDsListTask(void *data);
 
 /* Math module functions */
 int add (int a, int b);

@@ -50,6 +50,8 @@ int main( int argc, char *argv[] ) {
 	int r1=0, r2=0;*/
 	pthread_t *threads;
 
+	pthread_mutex_init(&p_mutex, NULL);
+	pthread_cond_init(&p_cond_var,NULL);
 	DBG = 0;
 
 	/* argument parsing; setup */
