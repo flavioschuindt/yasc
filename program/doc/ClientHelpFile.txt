@@ -54,10 +54,16 @@ Y A S C  --  ClientHelpFile   [Revision 1]
   'R'                   Asks server for partial result.
                         Due to synchronous handling of requests and responses, it's actually the same as 'T'.	????????????????????????????
 
+  'G'                   Sets debug flag for extra output.
+
   '+','-','*','/','%'   Integer basic operations.
 
   'D' [deprecated]      Command is still issued internally whenever a number is found; direct usage results in parsing error.
                         Doesn't break the flow of the program, nor it is checked for good use (i.e. right before a number).
+
+  'HELP'                Opens *this* document on the standard output, even if the -l flag is set.
+
+  'EXIT'                Exits the program without prompt.
 
 
 === Output ===

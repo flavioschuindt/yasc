@@ -95,7 +95,7 @@ void parse_line (char *string){
 				fprintf(fout,":: Error!\n:: Can't open help file.\n:: Check your working directory.\n");
 			} else {
 				while( fgets(line,MAX_LINE,helpFile) != NULL ) {
-					fprintf(fout,"%s",line);
+					fprintf(stdout,"%s",line);
 				}
 			}
 			/* open help pages                          *************		    TO DO             *************/
