@@ -36,13 +36,27 @@ void *processFDsListTask(void *data);
 
 /* Math module functions */
 int add (int a, int b);
-
 int sub (int a, int b);
-
 int mult (int a, int b);
+int divide (int a, int b);
+int remainder (int a, int b);
 
-float divide (int a, int b);
 
-void *handleClient ( void *fd );
+/*  slave work; handles requests from client  *
+ *  Parameters:  socket FD and stack pointer  *
+ *  Returns:     nothing                      */
+void *handle_client ( void *fd );
+
+
+/*  parses command line; admin interface      *
+ *  Parameters:  nothing                      *
+ *  Returns:     nothing                      */
+void *parse_line ();
+
+
+/*  manages number of slaves dynamically      *
+ *  Parameters:  nothing                      *
+ *  Returns:     nothing                      */
+void *manage_pool ();
 
 #endif

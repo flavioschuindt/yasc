@@ -21,14 +21,12 @@
 
 /* Global defines & macros */
 
-#define WORKERS 5
-#define DBG_ON ">> Debug mode ON\n"
-#define DBG_OFF ">> Debug mode OFF\n"
+#define MIN_WORKERS 5
+#define MAX_WORKERS 20
 
 
 /* Global Variables; remember to initialize */
 
-EXTERN int DBG;			/* Flag for Debug mode; 'ON' for DBG odd, 'OFF' for DBG even */
 EXTERN FDs_DESCRIPTOR *fds_desc;
 EXTERN STACK_DESCRIPTOR stack_desc;
 
