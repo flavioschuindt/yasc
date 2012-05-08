@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <signal.h>
 
 #ifdef OWNER
 #undef OWNER
@@ -81,9 +82,9 @@ void parse_line (char *string){
 		} else if( !strcmp(parameter,"G") ) {
 			DBG++;		/* test is done with bitwise AND; true for DBG odd, false for even */
 			if( DBG & 1 ) {
-				fprintf(fout,DBG_ON);
+				fprintf(fout,">> Debug mode ON\n");
 			} else {
-				fprintf(fout,DBG_OFF);
+				fprintf(fout,">> Debug mode OFF\n");
 			}
 
 		} else if( !strcmp(parameter,"help") ) {
@@ -103,17 +104,19 @@ void parse_line (char *string){
 
 
 void handleRequest ( char Req, int Data ) {
-	unsigned int *returningData;
+	int returningData[1];
 	PACKAGE outPackage, inPackage;
 
-	MALL(returningData,1);
+	signal(SIGPIPE,SIG_IGN);	/* instead of handling the signal, we handle write() error */
+
 	outPackage.msg = Req;
 	sprintf(outPackage.num,"%X",Data);
 
 	/* synchronous handling of requests; read() blocks the client until there is an answer to read */
+/* !!!!!!!!!!!!!! errno = 0; check for error after write() */
 	write(clientSocket,(void *)&outPackage,COM_SIZE);
 	read(clientSocket,(void *)&inPackage,COM_SIZE);
-	sscanf(inPackage.num,"%X",returningData);	/* converts string (hexadecimal integer) to normal integer */
+	sscanf(inPackage.num,"%X", (unsigned int *) returningData);	/* converts string (hexadecimal integer) to normal integer */
 
 
 	if( DBG & 1 ) {
@@ -138,7 +141,24 @@ void handleRequest ( char Req, int Data ) {
 
 
 void init_session () {
+	int gai_result;
 	PACKAGE outPackage, inPackage;
+
+	if( (clientSocket = socket(AF_INET,SOCK_STREAM,0)) < 0 ) {
+		fprintf(stderr,">> Error!\n>> Failed to open socket.\n");
+		exit(-1);
+	}
+
+	memset(&hints,0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;	/* IPV4 or IPV6 */
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_CANONNAME;
+
+	if( (gai_result = getaddrinfo(name, port,&hints,&server)) != 0 ) {
+		fprintf(stderr,">> Error!\n>> %s\n", gai_strerror(gai_result));
+		exit(-1);
+	}
+
 
 	for( pntAddr = server; pntAddr != NULL; pntAddr = pntAddr->ai_next ) {
 
@@ -151,9 +171,12 @@ void init_session () {
 
 	}
 
+	signal(SIGPIPE,SIG_IGN);
+
 	outPackage.msg = 'I';
 	sprintf(outPackage.num,"%X",0);	/* padding */
 
+/* !!!!!!!!!!!! errno = 0; check for error after write() */
 	write(clientSocket,(void *)&outPackage,COM_SIZE);
 	read(clientSocket,(void *)&inPackage,COM_SIZE);
 
@@ -172,12 +195,19 @@ void init_session () {
 void end_session () {
 	PACKAGE outPackage;
 
+	signal(SIGPIPE,SIG_IGN);
 	outPackage.msg = 'K';
 	sprintf(outPackage.num,"%X",0);	/* padding */
 
+/* !!!!!!!!!!!!!!!! errno = 0; check for error after write() */
 	write(clientSocket,(void *)&outPackage,COM_SIZE);
+	if( errno == EPIPE ){
 
-/* close socket */
+
+	}
+
+	shutdown(clientSocket, SHUT_WR);
+	close(clientSocket);
 
 	if( DBG & 1 ) {
 		fprintf(fout, "DEBUG:\tK=>\n" );

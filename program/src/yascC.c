@@ -38,11 +38,11 @@
 
 int main( int argc, char *argv[] ) {
 
-	int i, f=0, gai_result;
+	int i, f=0;
 	char *fileName, line[MAX_LINE];
 	time_t now;
 	struct tm *local;
-	struct addrinfo hints;
+
 
 	FILE *fin=stdin;	/* defaults to shell */
 	fout = stdout;		/* defaults to shell */
@@ -52,21 +52,8 @@ int main( int argc, char *argv[] ) {
 
 	/* argument parsing; setup */
 	if( argc > 2 ) {
-
-		if( (clientSocket = socket(AF_INET,SOCK_STREAM,0)) < 0 ) {
-			fprintf(stderr,">> Setup error!\n>> Failed to open socket.\n");
-			exit(-1);
-		}
-
-		memset(&hints,0, sizeof(hints));
-		hints.ai_family = AF_UNSPEC;	/* IPV4 or IPV6 */
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_flags = AI_CANONNAME;
-
-		if( (gai_result = getaddrinfo(argv[1], argv[2],&hints,&server)) != 0 ) {
-			fprintf(stderr,">> Setup error!\n>> %s\n", gai_strerror(gai_result));
-			exit(-1);
-		}
+		name = argv[1];		/* good name and port is only checked when one issues a connection */
+		port = argv[2];
 
 		i = 3;
 		while( i < argc ) {
@@ -117,7 +104,7 @@ int main( int argc, char *argv[] ) {
 	}
 
 	if( DBG & 1 ) {
-		fprintf(fout,DBG_ON);
+		fprintf(fout,">> Debug mode ON\n");
 	}
 
 

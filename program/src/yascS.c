@@ -39,21 +39,21 @@
 
 int main( int argc, char *argv[] ) {
 
-	int i, primarySocket, secondarySocket, clientAddr_len;
+	int primarySocket, secondarySocket, clientAddr_len;
 	unsigned int port;
 	struct sockaddr_in serverAddr, clientAddr;
 	char *endptr;
 
-	/*unsigned char fbyte[5] = {'+','-','*','/','%'};
-	unsigned char sbyte[10] = {'0','1','2','3','4','5','6','7','8','9'};
+/*
 	REQUEST *req;
 	int r1=0, r2=0;*/
-	pthread_t *threads;
+	pthread_t poolManager, serverManager;
 
-	DBG = 0;
+
+	/* >>> MASTER thread <<< */
 
 	/* argument parsing; setup */
-	if( argc > 1 ) {
+	if( argc == 2 ) {
 
 		errno = 0;		/* only way of checking over / underflow */
 		port = (unsigned int) strtol(argv[1],&endptr,0);
@@ -78,61 +78,40 @@ int main( int argc, char *argv[] ) {
 			exit(-1);
 		}
 
-		i = 2;
-		while( i < argc ) {
-
-			/* -g */
-			if( strcmp(argv[i],"-g") == 0 ) {		/* repeated use of the flag won't undo the effect */
-				DBG=1;
-
-			/* invalid argument */
-			} else {
-				fprintf(stderr,">> Setup error!\n>> Invalid argument \"%s\" ignored.\n", argv[i]);
-			}
-
-			i++;
-		}
-
 	} else {
-		fprintf(stderr,">> Setup error!\n>> Missing argument <listening port>\n");
-	}
-
-	if( DBG & 1 ) {
-		fprintf(stdout,DBG_ON);
+		fprintf(stderr,">> Setup error!\n>> Wrong arguments. Aborting.\n");
+		exit(-1);
 	}
 
 
 
+/** Services *******************************************/
+	/* >>> ADMIN interface <<< */
+	PTH_CREATE(&serverManager, parse_line, NULL);
+	/* >>> POOL MANAGER <<< */
+	PTH_CREATE(&poolManager, manage_pool, NULL);
+/*******************************************************/
+
+
+	/* listens for incoming connections; and accepts them */
 	listen(primarySocket,SOMAXCONN);
+/*	while( 1 ){
 
-/* DEMO communication */
-	MALL(threads,WORKERS);
+		if( $Struct.numbOfClients < MAX_WORKERS ) {
+			clientAddr_len = sizeof(clientAddr);
+			* secondarySocket is only a temporary holder of the file descriptor *
+			secondarySocket = accept(primarySocket,(struct sockaddr *) &clientAddr,(socklen_t*)&clientAddr_len);
 
-	i=1;
-	while( i < WORKERS ) {	/* while nº clientes menor que X */
-		clientAddr_len = sizeof(clientAddr);
-		secondarySocket = accept(primarySocket,(struct sockaddr *) &clientAddr,(socklen_t*)&clientAddr_len);
+			1. write socket id to $Struct
+			2. signal thread to fetch socket id
 
-		pthread_create(&threads[i], NULL, handleClient, (void*)secondarySocket);
-
-		i++;
-
-
-
-
-		/*
-		1. write socket id to pipe
-		2. signal thread to fetch socket id
-		3. end of while
-		*/
-
+		}
 	}
-/* DEMO */
+*/
 
 
 
 /*
-
 	srand(time(NULL));
 
 	MALL(req,1)

@@ -21,9 +21,7 @@
 
 /* Global defines & macros */
 
-#define MAX_LINE 256	/* maximum length for a command line; currently it's not checked to ensure the health of a command*/
-#define DBG_ON ">> Debug mode ON\n"
-#define DBG_OFF ">> Debug mode OFF\n"
+
 
 
 /* Global Variables; remember to initialize */
@@ -32,3 +30,5 @@ EXTERN int DBG;				/* Flag for Debug mode; 'ON' for DBG odd, 'OFF' for DBG even 
 EXTERN FILE *fout;			/* Output file descriptor */
 EXTERN int clientSocket;	/* File descriptor for the client socket */
 EXTERN struct addrinfo *server, *pntAddr;
+EXTERN struct addrinfo hints;
+EXTERN char *name, *port;

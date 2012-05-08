@@ -14,8 +14,14 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <signal.h>
+#include <errno.h>
+#include <pthread.h>
+#include <sys/socket.h>
+
 
 #include <prototypesS.h>
 #include <newvar.h>
@@ -144,22 +150,99 @@ void *processRequestsListTask(void *data)
 	}
 }
 
-void *handleClient ( void *fd ) {
+
+void *handle_client ( void *fd ) {
 	int FD = (int) fd;
 
+	signal(SIGPIPE,SIG_IGN);	/* instead of handling the signal, we handle write() error */
+
 	while(1) {
-		unsigned int *num;
+		int num[1];
 		PACKAGE outPackage, inPackage;
 
-		MALL(num,1);
-
+		errno = 0;
 		read(FD,(void *)&inPackage,COM_SIZE);
-		sscanf(inPackage.num,"%X",num);
+		if( (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ENOTCONN) || (errno == ECONNRESET) ){
+			shutdown(FD, SHUT_RDWR);
+			close(FD);
+			pthread_exit(NULL);
+		} else if( errno == ETIMEDOUT ){
+			shutdown(FD, SHUT_RDWR);
+			close(FD);
+			pthread_exit(NULL);
+		}
+
+		sscanf(inPackage.num,"%X", (unsigned int *) num);
 		fprintf(stdout, "%c\t%d\n", inPackage.msg, *num);
 
 		outPackage.msg = 'V';
 		sprintf(outPackage.num,"%X",-2485224);
+
+		errno = 0;
 		write(FD,(void *)&outPackage,COM_SIZE);
+		if( (errno == EPIPE) || (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ECONNRESET) ){
+			shutdown(FD, SHUT_RDWR);
+			close(FD);
+			pthread_exit(NULL);
+		}
+	}
+}
+
+
+void *parse_line () {
+	int caret=0;
+	char line[MAX_LINE], parameter[MAX_LINE];	/* if parameter is set as smaller than MAX_LINE, it is necessary to implement buffer overrun protection !!! */
+	char *remainingString;
+
+	while( fgets(line,MAX_LINE,stdin) != NULL ) {
+
+		remainingString = line;
+		while( sscanf(remainingString,"%s%n",parameter,&caret) > 0 ) {
+			remainingString += caret;	/* moves along the line */
+
+			if( !strcmp(parameter,"M") ) {
+
+				/* print info                      *****************          TO DO           ****************/
+
+			} else if( !strcmp(parameter,"help") ) {
+				fprintf(stdout,">> No soup for you!\n");
+				/* open help pages                          *************		    TO DO             *************/
+
+			} else if( !strcmp(parameter,"F") ) {
+				fprintf(stdout,">> Shutting down.\n\n\n");
+				exit(0);
+
+			} else {
+				fprintf(stdout,">> Parsing error!\n>> Unknown command \"%s\" ignored.\n>> Try help for assistance.\n",parameter);
+			}
+		}
 	}
 
+	return NULL;
+}
+
+
+void *manage_pool () {
+	int i;
+	pthread_t *slaves;
+	MALL(slaves,MAX_WORKERS);	/* avoids dynamic allocation by having always the maximum size */
+
+	i=1;
+	while( i < MIN_WORKERS ) {
+
+		PTH_CREATE(&slaves[i], handle_client, NULL);
+		pthread_detach( slaves[i] );
+
+		i++;
+	}
+
+
+/*
+1. check rate of increasing work
+1.1 if positive, launch more slaves
+1.2 if negative, kill slaves
+*/
+
+
+	return NULL;
 }
