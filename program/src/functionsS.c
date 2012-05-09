@@ -213,7 +213,7 @@ void* slaveWork() {
 			pthread_mutex_lock(&p_mutex);
 
 		} else {
-			fprintf(stdout,"Ninguém no server, waiting...");
+			fprintf(stdout,"\nNinguém no server, waiting...\n");
 			fflush(stdout);
 			/*There is no FD in the FDs' list.
 			So, we use condition variables to lock this specific thread and force it to wait until a new FD arrives
@@ -228,32 +228,33 @@ void* slaveWork() {
 
 
 void handle_client ( int fd ) {
-		int /*num_bytes=0,*/ num[1];
-		PACKAGE outPackage, inPackage;
+	int /*num_bytes=0,*/ num[1];
+	PACKAGE outPackage, inPackage;
 
 	signal(SIGPIPE,SIG_IGN);	/* instead of handling the signal, we handle write() error */
 
 /*if( (ioctl(fd,I_NREAD,(int)num_bytes) > 0) && (num_bytes == COM_SIZE) ) {*/	/* checks if there is a package to read */
 	errno = 0;
 	read(fd,(void *)&inPackage,COM_SIZE);
-	if( (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ENOTCONN) || (errno == ECONNRESET) || (errno == ETIMEDOUT) ){
-		/*shutdown(fd, SHUT_RDWR);*/
-		remove_client(fd);
-		close(fd);
-	}
+	if (errno != EWOULDBLOCK){
+		if( (errno == EAGAIN) || (errno == ENOTCONN) || (errno == ECONNRESET) || (errno == ETIMEDOUT) ){
+			/*shutdown(fd, SHUT_RDWR);*/
+			remove_client(fd);
+			close(fd);
+		}
+		sscanf(inPackage.num,"%X", (unsigned int *) num);
+		fprintf(stdout, "%c\t%d\n", inPackage.msg, *num);
 
-	sscanf(inPackage.num,"%X", (unsigned int *) num);
-	fprintf(stdout, "%c\t%d\n", inPackage.msg, *num);
+		outPackage.msg = 'V';
+		sprintf(outPackage.num,"%X",-2485224);
 
-	outPackage.msg = 'V';
-	sprintf(outPackage.num,"%X",-2485224);
-
-	errno = 0;
-	write(fd,(void *)&outPackage,COM_SIZE);
-	if( (errno == EPIPE) || (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ECONNRESET) ){
-		/*shutdown(fd, SHUT_RDWR);*/
-		remove_client(fd);
-		close(fd);
+		errno = 0;
+		write(fd,(void *)&outPackage,COM_SIZE);
+		if( (errno == EPIPE) || (errno == EAGAIN) || (errno == ECONNRESET) ){
+			/*shutdown(fd, SHUT_RDWR);*/
+			remove_client(fd);
+			close(fd);
+		}
 	}
 /*}*/
 }

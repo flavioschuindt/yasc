@@ -27,6 +27,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <fcntl.h>
 
 
 #include <newvar.h>
@@ -90,14 +91,13 @@ int main( int argc, char *argv[] ) {
 
 	/* listens for incoming connections; and accepts them */
 	listen(primarySocket,SOMAXCONN);
-
 	while(1) {
 
 		if( clients_desc.count < MAX_CLIENTS ) {	/* as we don't lock the mutex here, MAX_CLIENTS is not an actual maximum, it has some hysteresis !!! needs to be tested */
 			clientAddr_len = sizeof(clientAddr);
 			/* secondarySocket is only a temporary holder of the file descriptor */
 			secondarySocket = accept(primarySocket,(struct sockaddr *) &clientAddr,(socklen_t*)&clientAddr_len);
-
+			fcntl(secondarySocket, F_SETFL, O_NONBLOCK);
 			add_client(secondarySocket);
 
 		} else {		/* enough clients for now */
