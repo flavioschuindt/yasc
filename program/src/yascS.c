@@ -83,7 +83,7 @@ int main( int argc, char *argv[] ) {
 
 /** Launch Services ************************************/
 	/* >>> ADMIN interface <<< */
-	/*PTH_CREATE(&serverManager, parse_line, NULL);*/
+	PTH_CREATE(&serverManager, parse_line, NULL);
 	/* >>> POOL MANAGER <<< */
 	PTH_CREATE(&poolManager, manage_pool, NULL);
 /*******************************************************/
@@ -93,7 +93,7 @@ int main( int argc, char *argv[] ) {
 
 	while(1) {
 
-		if( clients_desc->count < MAX_CLIENTS ) {
+		if( clients_desc.count < MAX_CLIENTS ) {	/* as we don't lock the mutex here, MAX_CLIENTS is not an actual maximum, it has some hysteresis !!! needs to be tested */
 			clientAddr_len = sizeof(clientAddr);
 			/* secondarySocket is only a temporary holder of the file descriptor */
 			secondarySocket = accept(primarySocket,(struct sockaddr *) &clientAddr,(socklen_t*)&clientAddr_len);
@@ -105,6 +105,9 @@ int main( int argc, char *argv[] ) {
 		}
 	}
 
+
+	PTH_JOIN(serverManager,NULL);
+	PTH_JOIN(poolManager,NULL);
 
 	return 0;
 
