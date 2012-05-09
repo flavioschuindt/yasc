@@ -29,7 +29,6 @@
 /* Global Variables; remember to initialize */
 
 EXTERN CLIENTS_DESCRIPTOR *clients_desc;
-EXTERN CLIENT *client;
 
 EXTERN pthread_mutex_t p_mutex;	/* MUTEX to control access to protected resources */
 EXTERN pthread_cond_t  p_cond_var; /* global condition variable for our program */

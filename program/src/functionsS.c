@@ -37,7 +37,6 @@ void createInitialServerConditions () {
 	pthread_mutex_init(&p_mutex, NULL);
 	pthread_cond_init(&p_cond_var,NULL);
 
-	MALL(client,1);
 	MALL(clients_desc,1);
 
 	clients_desc->first = NULL;
@@ -53,7 +52,6 @@ void *parse_line () {
 	char *remainingString;
 	printf("Ok, to no parse line...");
 	while( fgets(line,MAX_LINE,stdin) != NULL ) {
-
 		remainingString = line;
 		while( sscanf(remainingString,"%s%n",parameter,&caret) > 0 ) {
 			remainingString += caret;	/* moves along the line */
@@ -70,12 +68,11 @@ void *parse_line () {
 			}
 		}
 	}
-
 	return NULL;
 }
 
 
-void* manage_pool () {
+void *manage_pool () {
 	int i;
 	pthread_t *slaves;
 	MALL(slaves,MAX_WORKERS);	/* avoids dynamic allocation by having always the maximum size */
@@ -83,7 +80,7 @@ void* manage_pool () {
 	i=0;
 	while( i < MIN_WORKERS ) {
 
-		PTH_CREATE(&slaves[i], processFDsListTask, NULL);
+		PTH_CREATE(&slaves[i], slaveWork, NULL);
 		pthread_detach( slaves[i] );
 
 		i++;
@@ -100,8 +97,8 @@ void* manage_pool () {
 
 int get_client () {
 	int fd;
-	fd = clients_desc->next->fd;
 
+	fd = clients_desc->next->fd;
 	if(clients_desc->count == 0){ /* Is there something to be processed? */
 		fd = -1;
 	}else if (clients_desc->count > 1){ /* Only updates if count is higher than one */
@@ -115,21 +112,25 @@ int get_client () {
 }
 
 
-void add_client ( int FDToBeAdded ) {
-	CLIENT *client;
-	MALL(client,1);
-	client->fd = FDToBeAdded;
-	client->next = NULL;
+void add_client ( int FD ) {
+	CLIENT *newclient;
+	MALL(newclient,1);
+	newclient->fd = FD;
+	newclient->next = NULL;
+
+	pthread_mutex_lock(&p_mutex);
 	if (clients_desc->count == 0){
-		client->previous = NULL;
-		clients_desc->first = client;
-		clients_desc->last = client;
+		newclient->previous = NULL;
+		clients_desc->first = newclient;
+		clients_desc->last = newclient;
+		clients_desc->next = newclient;
 	}else{
-		client->previous = clients_desc->last;
-		clients_desc->last->next = client;
-		clients_desc->last = client;
+		newclient->previous = clients_desc->last;
+		clients_desc->last->next = newclient;
+		clients_desc->last = newclient;
 	}
 	clients_desc->count++;
+	pthread_mutex_unlock(&p_mutex);
 	/* signal the condition variable - there's a new FD to handle */
 	pthread_cond_signal(&p_cond_var);
 	if( clients_desc->count < MAX_CLIENTS ) {
@@ -138,13 +139,13 @@ void add_client ( int FDToBeAdded ) {
 }
 
 
-void remove_client ( int FDToBeSearched ) {			/* !!!!!!!!!!!!!!!! needs to be revised */
+void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised */
 	int i;
 	CLIENT *client;
 	MALL(client,1);
 	client = clients_desc->first;
 	for (i=0; i < clients_desc->count; i++){
-		if (client->fd == FDToBeSearched){
+		if (client->fd == client_fd){
 			/* FD found. Rearranging the list. */
 			if (client == clients_desc->first){	/* Was the first one found? */
 				if (clients_desc->count == 1){	/* Is there only one node in the list? */
@@ -189,7 +190,7 @@ void remove_client ( int FDToBeSearched ) {			/* !!!!!!!!!!!!!!!! needs to be re
 /*}*/
 
 
-void* processFDsListTask() {
+void* slaveWork() {
 	int fd;
 
 	pthread_mutex_lock(&p_mutex);

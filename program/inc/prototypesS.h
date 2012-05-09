@@ -47,7 +47,7 @@ void remove_client ( int FDToBeSearched );
 void create_stack ( int fd );
 
 /* Access requests' list and process a specific request got from the list */
-void *processFDsListTask();
+void *slaveWork();
 
 /*  slave work; handles requests from client  *
  *  Parameters:  socket FD and stack pointer  *

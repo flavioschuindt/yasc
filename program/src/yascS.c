@@ -83,10 +83,8 @@ int main( int argc, char *argv[] ) {
 
 /** Launch Services ************************************/
 	/* >>> ADMIN interface <<< */
-	PTH_CREATE(&serverManager, parse_line, NULL);
-	/*pthread_create(&serverManager, NULL, parse_line, NULL);*/
+	/*PTH_CREATE(&serverManager, parse_line, NULL);*/
 	/* >>> POOL MANAGER <<< */
-	/*pthread_create(&poolManager, NULL, manage_pool, NULL);*/
 	PTH_CREATE(&poolManager, manage_pool, NULL);
 /*******************************************************/
 
