@@ -19,7 +19,6 @@
 #include <unistd.h>
 #include <signal.h>
 #include <errno.h>
-#include <pthread.h>
 #include <sys/socket.h>
 
 
@@ -95,11 +94,10 @@ void *manage_pool () {
 }
 
 
-int get_client () {
-	int fd;
+CLIENT get_client () {
 
-	fd = clients_desc.next->fd;
-
+	CLIENT client;
+	client = *(clients_desc.next);
 	if (clients_desc.count > 1){ /* Only updates if count is higher than one */
 		if (clients_desc.next == clients_desc.last) { /* Is time to rotate? */
 			clients_desc.next = clients_desc.first;
@@ -108,15 +106,22 @@ int get_client () {
 		}
 	}
 
-    return fd;
+    return client;
 }
 
 
 void add_client ( int FD ) {
 	CLIENT *newclient;
+	STACK_DESCRIPTOR *stack_desc;
 	MALL(newclient,1);
 	newclient->fd = FD;
 	newclient->next = NULL;
+	/*Create a stack descriptor for this client*/
+	MALL(stack_desc,1);
+	stack_desc->first = NULL;
+	stack_desc->count = 0;
+
+	newclient->stack_desc = stack_desc;
 
 	pthread_mutex_lock(&p_mutex);
 	if (clients_desc.count == 0){
@@ -133,7 +138,6 @@ void add_client ( int FD ) {
 	pthread_mutex_unlock(&p_mutex);
 	/* signal the condition variable - there's a new FD to handle */
 	pthread_cond_signal(&p_cond_var);
-
 	if( clients_desc.count < MAX_CLIENTS ) {
 		/* signal master to accept more */
 	}
@@ -195,19 +199,18 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 
 
 void* slaveWork() {
-	int fd;
-
+	CLIENT client;
 	pthread_mutex_lock(&p_mutex);
 
 	while(1) {
 		/* Always stays in a loop getting FDs from the list and processing */
 		if( clients_desc.count > 0 ) { /* Is there any FD in the list waiting to be processed? */
 
-			fd = get_client();
+			client = get_client();
 
 			pthread_mutex_unlock(&p_mutex); /*Ok, now others threads can access the list and process other requests*/
 
-			handle_client(fd);
+			handle_client(client);
 
 			pthread_mutex_lock(&p_mutex);
 
@@ -226,61 +229,99 @@ void* slaveWork() {
 }
 
 
-void handle_client ( int fd ) {
-	int /*num_bytes=0,*/ num[1];
+void handle_client ( CLIENT client ) {
+	int /*num_bytes=0,*/ num[1],resp;
 	PACKAGE outPackage, inPackage;
 
 	signal(SIGPIPE,SIG_IGN);	/* instead of handling the signal, we handle write() error */
 
 	errno = 0;
-	read(fd,(void *)&inPackage,COM_SIZE);
+	read(client.fd,(void *)&inPackage,COM_SIZE);
 	if (errno != EWOULDBLOCK){
 		if( (errno == EAGAIN) || (errno == ENOTCONN) || (errno == ECONNRESET) || (errno == ETIMEDOUT) ){
-			remove_client(fd);
-			close(fd);
+			remove_client(client.fd);
+			close(client.fd);
 		}
 
-		if( inPackage.msg == 'D' ) {
-			sscanf(inPackage.num,"%X", (unsigned int *) num);
-			/*add_stack_value(num[1]);*/
-		} else if( inPackage.msg == '+' ) {
-
-		} else if( inPackage.msg == '-' ) {
-
-		} else if( inPackage.msg == '*' ) {
-
-		} else if( inPackage.msg == '/' ) {
-
-		} else if( inPackage.msg == '%' ) {
-
-		} else if( inPackage.msg == 'R' ) {
-
-		} else if( inPackage.msg == 'T' ) {
-
-		} else if( inPackage.msg == 'P' ) {
-
-		} else if( inPackage.msg == 'I' ) {
-
-		} else if( inPackage.msg == 'K' ) {
-			/*erase_stack();*/
-			remove_client(fd);
-			close(fd);
-			return;							/* !!!!!!!!!!!!!!! ESTE RETURN É PARA SAIR */
+		switch(inPackage.msg){
+			case 'D':
+					sscanf(inPackage.num,"%X", (unsigned int *) num);
+					cmd_D(num,client.stack_desc);
+					outPackage = mountResponsePackage(V,0,outPackage);
+					break;
+			case '+':
+					if (client.stack_desc->count >= 2){
+						cmd_add(client.stack_desc);
+						outPackage = mountResponsePackage(V,0,outPackage);
+					} else {
+						outPackage = mountResponsePackage(E,0,outPackage);
+					}
+					break;
+			case '-':
+					if (client.stack_desc->count >= 2){
+						cmd_sub(client.stack_desc);
+						outPackage = mountResponsePackage(V,0,outPackage);
+					} else {
+						outPackage = mountResponsePackage(E,0,outPackage);
+					}
+					break;
+			case '*':
+					if (client.stack_desc->count >= 2){
+						cmd_mult(client.stack_desc);
+						outPackage = mountResponsePackage(V,0,outPackage);
+					} else {
+						outPackage = mountResponsePackage(E,0,outPackage);
+					}
+					break;
+			case '/':
+					if (client.stack_desc->count >= 2 && client.stack_desc->first->next->operand != 0){
+						/*It has at least two operands and the divisor is not zero*/
+						cmd_div(client.stack_desc);
+						outPackage = mountResponsePackage(V,0,outPackage);
+					} else {
+						outPackage = mountResponsePackage(E,0,outPackage);
+					}
+					break;
+			case '%':
+					if (client.stack_desc->count >= 2){
+						cmd_reminder(client.stack_desc);
+						outPackage = mountResponsePackage(V,0,outPackage);
+					} else {
+						outPackage = mountResponsePackage(E,0,outPackage);
+					}
+					break;
+			case 'R':
+					resp = cmd_R(client.stack_desc);
+					outPackage = mountResponsePackage(V,resp,outPackage);
+					break;
+			case 'T':
+					resp = cmd_T(client.stack_desc);
+					outPackage = mountResponsePackage(V,resp,outPackage);
+					break;
+			case 'P':
+					resp = cmd_P(client.stack_desc);
+					outPackage = mountResponsePackage(V,resp,outPackage);
+					break;
+			case 'I':
+					outPackage = mountResponsePackage(V,0,outPackage);
+					break;
+			case 'K':
+					remove_client(client.fd);
+					close(client.fd);
+					return;
+					break;
 		}
-
 /* DEMO */
-		sscanf(inPackage.num,"%X", (unsigned int *) num);
-		fprintf(stdout, "%c\t%d\n", inPackage.msg, *num);
+		/*sscanf(inPackage.num,"%X", (unsigned int *) num);
+		fprintf(stdout, "%c\t%d\n", inPackage.msg, *num);*/
 
-		outPackage.msg = 'V';
-		sprintf(outPackage.num,"%X",-2485224);
 /* DEMO */
 
 		errno = 0;
-		write(fd,(void *)&outPackage,COM_SIZE);
+		write(client.fd,(void *)&outPackage,COM_SIZE);
 		if( (errno == EPIPE) || (errno == EAGAIN) || (errno == ECONNRESET) ){
-			remove_client(fd);
-			close(fd);
+			remove_client(client.fd);
+			close(client.fd);
 		}
 	}
 }

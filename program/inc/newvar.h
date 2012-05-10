@@ -25,6 +25,7 @@ typedef struct client {
 	int fd; /* socket fd for a specific client */
 	struct client *next;
 	struct client *previous;
+	struct stack_descriptor *stack_desc;
 } CLIENT;
 
 /* A descriptor to control the "ring buffer", containing a pointer to the next client to be served and a counter that represents

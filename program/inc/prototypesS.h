@@ -33,7 +33,7 @@ void *manage_pool ();
 
 
 /*Get and Update the first client to be served in the list of FDs*/
-int get_client ();
+CLIENT get_client ();
 
 /*Add a node(client) in the FDs List*/
 void add_client ( int FDToBeAdded );
@@ -52,7 +52,7 @@ void *slaveWork();
 /*  slave work; handles requests from client  *
  *  Parameters:  socket FD and stack pointer  *
  *  Returns:     nothing                      */
-void handle_client ( int fd );
+void handle_client ( CLIENT client );
 
 
 /* Math module functions */
@@ -62,5 +62,17 @@ int mult (int a, int b);
 int divide (int a, int b);
 int remainder (int a, int b);
 
+/* Commands handler module functions*/
+PACKAGE mountResponsePackage(char status, int response, PACKAGE outPackage);
+void cmd_D(int operand[1], STACK_DESCRIPTOR *stack_desc);
+int cmd_T(STACK_DESCRIPTOR *stack_desc);
+int cmd_P(STACK_DESCRIPTOR *stack_desc);
+void cmd_add(STACK_DESCRIPTOR *stack_desc);
+void cmd_sub(STACK_DESCRIPTOR *stack_desc);
+void cmd_div(STACK_DESCRIPTOR *stack_desc);
+void cmd_mult(STACK_DESCRIPTOR *stack_desc);
+void cmd_reminder(STACK_DESCRIPTOR *stack_desc);
+void reorganizeStack(STACK_DESCRIPTOR *stack_desc, int newValue);
+int cmd_R(STACK_DESCRIPTOR *stack_desc);
 
 #endif
