@@ -21,7 +21,6 @@
 #include <errno.h>
 #include <pthread.h>
 #include <sys/socket.h>
-#include <stropts.h>
 
 
 #include <prototypesS.h>
@@ -233,28 +232,55 @@ void handle_client ( int fd ) {
 
 	signal(SIGPIPE,SIG_IGN);	/* instead of handling the signal, we handle write() error */
 
-/*if( (ioctl(fd,I_NREAD,(int)num_bytes) > 0) && (num_bytes == COM_SIZE) ) {*/	/* checks if there is a package to read */
 	errno = 0;
 	read(fd,(void *)&inPackage,COM_SIZE);
 	if (errno != EWOULDBLOCK){
 		if( (errno == EAGAIN) || (errno == ENOTCONN) || (errno == ECONNRESET) || (errno == ETIMEDOUT) ){
-			/*shutdown(fd, SHUT_RDWR);*/
 			remove_client(fd);
 			close(fd);
 		}
+
+		if( inPackage.msg == 'D' ) {
+			sscanf(inPackage.num,"%X", (unsigned int *) num);
+			/*add_stack_value(num[1]);*/
+		} else if( inPackage.msg == '+' ) {
+
+		} else if( inPackage.msg == '-' ) {
+
+		} else if( inPackage.msg == '*' ) {
+
+		} else if( inPackage.msg == '/' ) {
+
+		} else if( inPackage.msg == '%' ) {
+
+		} else if( inPackage.msg == 'R' ) {
+
+		} else if( inPackage.msg == 'T' ) {
+
+		} else if( inPackage.msg == 'P' ) {
+
+		} else if( inPackage.msg == 'I' ) {
+
+		} else if( inPackage.msg == 'K' ) {
+			/*erase_stack();*/
+			remove_client(fd);
+			close(fd);
+			return;							/* !!!!!!!!!!!!!!! ESTE RETURN É PARA SAIR */
+		}
+
+/* DEMO */
 		sscanf(inPackage.num,"%X", (unsigned int *) num);
 		fprintf(stdout, "%c\t%d\n", inPackage.msg, *num);
 
 		outPackage.msg = 'V';
 		sprintf(outPackage.num,"%X",-2485224);
+/* DEMO */
 
 		errno = 0;
 		write(fd,(void *)&outPackage,COM_SIZE);
 		if( (errno == EPIPE) || (errno == EAGAIN) || (errno == ECONNRESET) ){
-			/*shutdown(fd, SHUT_RDWR);*/
 			remove_client(fd);
 			close(fd);
 		}
 	}
-/*}*/
 }

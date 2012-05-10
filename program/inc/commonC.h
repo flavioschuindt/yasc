@@ -21,6 +21,8 @@
 
 /* Global defines & macros */
 
+#define TIME_OUT 300	/* [seconds] idle time necessary to close session automatically */
+#define TIME_OUT_MSG ":: Idle for 5 minute.\n:: Closed session.\n"
 
 
 

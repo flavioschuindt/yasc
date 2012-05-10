@@ -74,7 +74,8 @@ void parse_line (char *string){
 			init_session();	/* establishes connection with server */
 
 		} else if( !strcmp(parameter,"K") ) {
-			end_session();	/* ends connection with server */
+			end_session(0);	/* ends connection with server; 0 enables extra output that is relevant here */
+			alarm(0);	/* no sense in waiting for idle after 'K' */
 
 		} else if( parameter[0] == ';' ) {	/* end of effective commands (anything past that is interpreted as comments until next NL) */
 			break;
@@ -98,12 +99,14 @@ void parse_line (char *string){
 					fprintf(stdout,"%s",line);
 				}
 			}
-			/* open help pages                          *************		    TO DO             *************/
+			fclose(helpFile);
 
 		} else if( !strcmp(parameter,"EXIT") ) {
-			fprintf(fout,":: NEXT!\n\n\n");
+			end_session(1);		/* any integer is fine as long as it is not 0 */
+			close(clientSocket);
+			fprintf(fout,":: Completed successfully\n\n\n");
+			fclose(fout);
 			exit(0);
-			/* check if there is an open session; prompt to close it  (how ?)        *************		    TO DO             *************/
 
 		} else {
 			fprintf(fout,":: Parsing error!\n:: Unknown command \"%s\" ignored.\n:: Try HELP for assistance.\n",parameter);
@@ -113,6 +116,7 @@ void parse_line (char *string){
 
 
 void handleRequest ( char Req, int Data ) {
+
 	int returningData[1];
 	PACKAGE outPackage, inPackage;
 
@@ -125,23 +129,21 @@ void handleRequest ( char Req, int Data ) {
 	errno = 0;
 	write(clientSocket,(void *)&outPackage,COM_SIZE);
 	if( (errno == EPIPE) || (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ECONNRESET) ){
-		shutdown(clientSocket, SHUT_RDWR);
 		close(clientSocket);
-		fprintf(fout, ">> Error!\n>> No server connection.\n>> Try 'I'.\n");
+		fprintf(fout, ":: Error!\n:: No server connection.\n:: Try 'I'.\n");
 	} else {
 		errno = 0;
 		read(clientSocket,(void *)&inPackage,COM_SIZE);
 		if( (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ENOTCONN) || (errno == ECONNRESET) ){
-			shutdown(clientSocket, SHUT_RDWR);
 			close(clientSocket);
-			fprintf(fout, ">> Error!\n>> No server connection.\n>> Try 'I'.\n");
+			fprintf(fout, ":: Error!\n:: No server connection.\n:: Try 'I'.\n");
 		} else if( errno == ETIMEDOUT ){
-			shutdown(clientSocket, SHUT_RDWR);
+
 			close(clientSocket);
-			fprintf(fout, ">> Error!\n>> Timed out.\n>> Try again.\n");
+			fprintf(fout, ":: Error!\n:: Timed out.\n:: Try again.\n");
 		} else {
 			sscanf(inPackage.num,"%X", (unsigned int *) returningData);	/* converts string (hexadecimal integer) to normal integer */
-
+			alarm(TIME_OUT);
 			if( DBG & 1 ) {
 				if( Req == 'D' ) {
 					fprintf(fout, "DEBUG:\t%c%d=> : =>%c\n", Req, Data, inPackage.msg);
@@ -163,6 +165,7 @@ void handleRequest ( char Req, int Data ) {
 
 
 void init_session () {
+
 	int gai_result;
 	PACKAGE outPackage, inPackage;
 
@@ -188,7 +191,7 @@ void init_session () {
 			break;
 
 		} else if(pntAddr->ai_next==NULL){
-			fprintf(stderr,">> Error!\n>> Failed to establish connection\n");
+			fprintf(fout,":: Error!\n:: Failed to establish connection\n");
 		}
 
 	}
@@ -201,15 +204,13 @@ void init_session () {
 	errno = 0;
 	write(clientSocket,(void *)&outPackage,COM_SIZE);
 	if( (errno == EPIPE) || (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ECONNRESET) ){
-		shutdown(clientSocket, SHUT_RDWR);
 		close(clientSocket);
-		fprintf(fout, ">> Error!\n>> No server connection.\n>> Try again.\n");
+		fprintf(fout, ":: Error!\n:: No server connection.\n:: Try again.\n");
 	} else {
 		read(clientSocket,(void *)&inPackage,COM_SIZE);
 		if( (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ENOTCONN) || (errno == ECONNRESET) ){
-			shutdown(clientSocket, SHUT_RDWR);
 			close(clientSocket);
-			fprintf(fout, ">> Error!\n>> No server connection.\n>> Try again.\n");
+			fprintf(fout, ":: Error!\n:: No server connection.\n:: Try again.\n");
 		} else {
 			if( DBG & 1 ) {
 				fprintf(fout, "DEBUG:\tI=> : =>%c\n", inPackage.msg);
@@ -220,12 +221,17 @@ void init_session () {
 			} else if( inPackage.msg == 'I' ) {
 				fprintf(fout, ":: Server error!\n");
 			}
+
+			if( inPackage.msg == 'V' ) {
+				alarm(TIME_OUT);	/* only set if there is connection */
+			}
 		}
 	}
 }
 
 
-void end_session () {
+void end_session ( int mode ) {
+
 	PACKAGE outPackage;
 
 	signal(SIGPIPE,SIG_IGN);
@@ -235,15 +241,23 @@ void end_session () {
 	errno = 0;
 	write(clientSocket,(void *)&outPackage,COM_SIZE);
 	if( (errno == EPIPE) || (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ECONNRESET) ){
-		shutdown(clientSocket, SHUT_RDWR);
 		close(clientSocket);
-		fprintf(fout, ">> Error!\n>> Failed to contact server.\n>> Closing socket anyway.\n");
+		if( mode == 0 ) {		/* if it is called from within 'EXIT' procedure, it assumes that this error is normal; ex. 'K EXIT' shall not issue this message */
+			fprintf(fout, ":: Error!\n:: Failed to contact server.\n");
+		}
+	} else 	if( DBG & 1 ) {
+		fprintf(fout, "DEBUG:\tK=>\n" );
 	}
 
 	shutdown(clientSocket, SHUT_WR);
 	close(clientSocket);
+}
 
-	if( DBG & 1 ) {
-		fprintf(fout, "DEBUG:\tK=>\n" );
-	}
+
+void timeout_handler () {
+
+	signal(SIGALRM, SIG_IGN);
+	end_session(1);
+	fprintf(fout,TIME_OUT_MSG);
+	signal(SIGALRM,timeout_handler);
 }

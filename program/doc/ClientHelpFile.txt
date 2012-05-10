@@ -44,15 +44,17 @@ Y A S C  --  ClientHelpFile   [Revision 1]
 
 === Commands ===
 
-  'I'                   Begins session: connection is established; server issues a stack
+  'I'                   Begins session: connection is established; server issues a stack.
+                        Server cleans the stack if there is one already.
 
   'K'                   Ends session: server erases stack; connection is terminated.
 
   'P'                   Asks server for the stack size.
   'T'                   Asks server for the top most value in the stack.
 
-  'R'                   Asks server for partial result.
-                        Due to synchronous handling of requests and responses, it's actually the same as 'T'.	????????????????????????????
+  'R'                   Asks server for result and cleans the stack.
+                        If the result is a partial one (i.e. there are still values in the stack) the server shall return an error.
+                        To see partial results use 'T'.
 
   'G'                   Sets debug flag for extra output.
 

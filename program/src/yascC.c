@@ -29,6 +29,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <signal.h>
 
 
 #define OWNER	/* owner of global variables */
@@ -50,10 +51,9 @@ int main( int argc, char *argv[] ) {
 
 	DBG = 0;
 
-
 	/* argument parsing; setup */
 	if( argc > 2 ) {
-		name = argv[1];		/* good name and port is only checked when one issues a connection */
+		name = argv[1];		/* good name and port is only checked when one issues a 'I' command */
 		port = argv[2];
 
 		i = 3;
@@ -108,11 +108,15 @@ int main( int argc, char *argv[] ) {
 		fprintf(fout,">> Debug mode ON\n");
 	}
 
+	signal(SIGALRM,timeout_handler);
 
 	/* reads successive lines from source; repeats at the end of each set of instruction */
 	while( fgets(line,MAX_LINE,fin) != NULL ) {
 		parse_line(line);
 	}
+
+	fclose(fin);
+	fclose(fout);
 
 	return 0;
 }

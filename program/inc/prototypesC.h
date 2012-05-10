@@ -26,15 +26,22 @@ void parse_line (char *string);
  *  Returns:     nothing                            */
 void handleRequest ( char Req, int Data );
 
+
 /*  Tries to establish connection; waits for confirmation *
  *  Parameters:  nothing                                  *
  *  Returns:     nothing                                  */
 void init_session ();
 
-/*  Terminates connection; doesn't wait for server confirmation *
- *  Parameters:  nothing                                        *
- *  Returns:     nothing                                        */
-void end_session ();
 
+/*  Terminates connection; doesn't wait for server confirmation *
+ *  Parameters:  output mode; differentiates 'K' from 'EXIT'    *
+ *  Returns:     nothing                                        */
+void end_session ( int mode );
+
+
+/*  Terminates connection on TIME_OUT seconds to unburden the server *
+ *  Parameters:  nothing                                             *
+ *  Returns:     nothing                                             */
+void timeout_handler ();
 
 #endif

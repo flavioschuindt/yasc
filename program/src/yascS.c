@@ -97,7 +97,10 @@ int main( int argc, char *argv[] ) {
 			clientAddr_len = sizeof(clientAddr);
 			/* secondarySocket is only a temporary holder of the file descriptor */
 			secondarySocket = accept(primarySocket,(struct sockaddr *) &clientAddr,(socklen_t*)&clientAddr_len);
+
+			/* allows assynchronous reading from socket */
 			fcntl(secondarySocket, F_SETFL, O_NONBLOCK);
+
 			add_client(secondarySocket);
 
 		} else {		/* enough clients for now */
