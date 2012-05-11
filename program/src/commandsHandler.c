@@ -185,8 +185,10 @@ PACKAGE cmd_R (STACK_DESCRIPTOR *stack_desc, PACKAGE outPackage) {		/* stack is 
 
 	if( stack_desc->count > 0 ) {
 		if( stack_desc->count == 1 ) {
+			PACKAGE aux_pckg;
+			aux_pckg = mountResponsePackage('V', stack_desc->first->operand, outPackage);
 			resetStack(stack_desc);
-			return mountResponsePackage('V', stack_desc->first->operand, outPackage);
+			return aux_pckg;
 		} else {
 			/* result is only partial; stack is bigger than expected */
 			resetStack(stack_desc);
@@ -211,7 +213,6 @@ void reorganizeStack (STACK_DESCRIPTOR *stack_desc, int newValue) {
 
 
 void resetStack (STACK_DESCRIPTOR *stack_desc) {
-	int i;
 	STACK_ELEMENT *aux, *aux_eliminate;
 
 	aux = stack_desc->first;
@@ -219,7 +220,6 @@ void resetStack (STACK_DESCRIPTOR *stack_desc) {
 	stack_desc->first = NULL;
 	stack_desc->count = 0;
 
-/*	for(i=0; i<stack_desc->count; i++) {*/
 	while( aux != NULL ) {
 		aux_eliminate = aux;
 		aux = aux->next;
