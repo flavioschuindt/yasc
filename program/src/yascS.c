@@ -28,6 +28,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <fcntl.h>
+#include <signal.h>
 
 
 #include <newvar.h>
@@ -49,7 +50,7 @@ int main( int argc, char *argv[] ) {
 
 	/* >>> MASTER thread <<< */
 	createInitialServerConditions();
-
+	pid = getpid();
 	/* argument parsing; setup */
 	if( argc == 2 ) {
 
@@ -88,7 +89,6 @@ int main( int argc, char *argv[] ) {
 	/* >>> POOL MANAGER <<< */
 	PTH_CREATE(&poolManager, manage_pool, NULL);
 /*******************************************************/
-
 	/* listens for incoming connections; and accepts them */
 	listen(primarySocket,SOMAXCONN);
 	while(1) {
@@ -104,6 +104,7 @@ int main( int argc, char *argv[] ) {
 			add_client(secondarySocket);
 
 		} else {		/* enough clients for now */
+			signal(SIGALRM,wakeUp);
 			pause();
 		}
 	}

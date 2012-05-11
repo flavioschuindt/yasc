@@ -138,9 +138,6 @@ void add_client ( int FD ) {
 	pthread_mutex_unlock(&p_mutex);
 	/* signal the condition variable - there's a new FD to handle */
 	pthread_cond_signal(&p_cond_var);
-	if( clients_desc.count < MAX_CLIENTS ) {
-		/* signal master to accept more */
-	}
 }
 
 
@@ -175,6 +172,9 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 		} else {
 			client=client->next;
 		}
+	}
+	if( clients_desc.count < MAX_CLIENTS ) {
+		kill(pid, SIGALRM);
 	}
 	pthread_mutex_unlock(&p_mutex);
 }
@@ -325,3 +325,8 @@ void handle_client ( CLIENT client ) {
 		}
 	}
 }
+
+void wakeUp(){
+	return;
+}
+

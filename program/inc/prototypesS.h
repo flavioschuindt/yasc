@@ -75,4 +75,6 @@ void cmd_reminder(STACK_DESCRIPTOR *stack_desc);
 void reorganizeStack(STACK_DESCRIPTOR *stack_desc, int newValue);
 int cmd_R(STACK_DESCRIPTOR *stack_desc);
 
+void wakeUp();
+
 #endif
