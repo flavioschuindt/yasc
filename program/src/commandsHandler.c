@@ -1,8 +1,23 @@
+/*************************************************************
+ *  PSis  --  2011 / 2012                                    *
+ *  YASC - Yet Another Simple Calculator                     *
+ *  _______________________________________________________  *
+ *                                                           *
+ *  Bruno Santos        nº64956     MEAer                    *
+ *  Flávio Schuindt     nº74570     MEEC                     *
+ *  _______________________________________________________  *
+ *                                                           *
+ *  Commands' handler functions                              *
+ *                                                           *
+ *************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
 
 #include <prototypesS.h>
 #include <globalHeader.h>
+
 
 PACKAGE mountResponsePackage(char status, int response, PACKAGE outPackage){
 	outPackage.msg = status;
@@ -10,65 +25,204 @@ PACKAGE mountResponsePackage(char status, int response, PACKAGE outPackage){
 	return outPackage;
 }
 
-void cmd_D(int operand[1], STACK_DESCRIPTOR *stack_desc){
+
+PACKAGE cmd_D (int operand[1], STACK_DESCRIPTOR *stack_desc, PACKAGE outPackage) {
 	STACK_ELEMENT *stack_el;
-	MALL(stack_el,1)
+	MALL(stack_el,1);
 	stack_el->operand = *operand;
 	stack_el->next = stack_desc->first;
 	stack_desc->first = stack_el;
 	stack_desc->count++;
+	return mountResponsePackage('V',OK,outPackage);
 }
-int cmd_T(STACK_DESCRIPTOR *stack_desc){
-	if (stack_desc->count > 0){ /*It's a very important test. If it is not done, stack_desc->first is pointing to NULL and
-								  stack_desc->first->operand will cause a segmentairon fault. Ńever remove this check!*/
-		return stack_desc->first->operand;
-	} else { 
-		return 0; /*IT CAN'T RETURN ZERO. IT SHOULD RETURN INVALID COMMAND. NEEDS TO BE REVISED!!*/
+
+
+PACKAGE cmd_T (STACK_DESCRIPTOR *stack_desc, PACKAGE outPackage) {
+	if( stack_desc->count > 0 ) {
+		return mountResponsePackage('V',stack_desc->first->operand,outPackage);
+	} else {
+		return mountResponsePackage('E',BAD_STACK,outPackage);
 	}
 }
-int cmd_P(STACK_DESCRIPTOR *stack_desc){
-	return stack_desc->count;
-}
-void cmd_add(STACK_DESCRIPTOR *stack_desc) {
+
+
+PACKAGE cmd_add (STACK_DESCRIPTOR *stack_desc, PACKAGE outPackage) {	/* if 'E' is returned, the operation was not performed; stack is unchanged */
 	int sum;
-	sum = stack_desc->first->operand + stack_desc->first->next->operand;
-	reorganizeStack(stack_desc,sum);
+
+	if (stack_desc->count >= 2){
+
+		if( ((stack_desc->first->operand > 0) && (stack_desc->first->next->operand > (INT_MAX - stack_desc->first->operand))) ||
+			((stack_desc->first->operand < 0) && (stack_desc->first->next->operand < (INT_MIN - stack_desc->first->operand))) ) {
+			/* OVER/UNDERFLOW */
+			return mountResponsePackage('E',OUT_OF_RANGE,outPackage);
+		} else {
+			sum = stack_desc->first->next->operand + stack_desc->first->operand;
+			reorganizeStack(stack_desc,sum);
+			return mountResponsePackage('V',OK,outPackage);
+		}
+	} else {
+		/* Not enough operands */
+		return mountResponsePackage('E',BAD_STACK,outPackage);
+	}
 }
-void cmd_sub(STACK_DESCRIPTOR *stack_desc) {
+
+
+PACKAGE cmd_sub (STACK_DESCRIPTOR *stack_desc, PACKAGE outPackage) {	/* if 'E' is returned, the operation was not performed; stack is unchanged */
 	int sub;
-	sub = stack_desc->first->operand - stack_desc->first->next->operand;
-	reorganizeStack(stack_desc,sub);
+
+	if (stack_desc->count >= 2){
+
+		if( ((stack_desc->first->operand > 0) && (stack_desc->first->next->operand < (INT_MIN + stack_desc->first->operand))) ||
+			((stack_desc->first->operand < 0) && (stack_desc->first->next->operand > (INT_MAX + stack_desc->first->operand))) ) {
+			/* OVER/UNDERFLOW */
+			return mountResponsePackage('E',OUT_OF_RANGE,outPackage);
+		} else {
+			sub = stack_desc->first->next->operand - stack_desc->first->operand;
+			reorganizeStack(stack_desc,sub);
+			return mountResponsePackage('V',OK,outPackage);
+		}
+	} else {
+		/* Not enough operands */
+		return mountResponsePackage('E',BAD_STACK,outPackage);
+	}
 }
-void cmd_div(STACK_DESCRIPTOR *stack_desc) {
+
+
+PACKAGE cmd_div (STACK_DESCRIPTOR *stack_desc, PACKAGE outPackage) {	/* if 'E' is returned, the operation was not performed; stack is unchanged */
 	int division;
-	division = stack_desc->first->operand / stack_desc->first->next->operand;
-	reorganizeStack(stack_desc,division);
+
+	if( stack_desc->count >= 2 ) {
+		if( stack_desc->first->operand != 0 ) {
+
+			if ( (stack_desc->first->next->operand == LONG_MIN) && (stack_desc->first->operand == -1) ) {
+				/* OVER/UNDERFLOW */
+				return mountResponsePackage('E',OUT_OF_RANGE,outPackage);
+			} else {
+				division = stack_desc->first->next->operand / stack_desc->first->operand;
+				reorganizeStack(stack_desc,division);
+				return mountResponsePackage('V',OK,outPackage);
+			}
+		} else {
+			/* division by 0 */
+			return mountResponsePackage('E',DIV_0,outPackage);
+		}
+	} else {
+		/* Not enough operands */
+		return mountResponsePackage('E',BAD_STACK,outPackage);
+	}
 }
-void cmd_mult(STACK_DESCRIPTOR *stack_desc) {
+
+
+PACKAGE cmd_mult (STACK_DESCRIPTOR *stack_desc, PACKAGE outPackage) {	/* if 'E' is returned, the operation was not performed; stack is unchanged */
 	int prod;
-	prod = stack_desc->first->operand * stack_desc->first->next->operand;
-	reorganizeStack(stack_desc,prod);
+
+	if( stack_desc->count >= 2 ) {
+		if( stack_desc->first->next->operand > 0 ) {
+			if( stack_desc->first->operand > 0 ) {
+				if( stack_desc->first->next->operand > (INT_MAX / stack_desc->first->operand) ) {
+					/* OVER/UNDERFLOW */
+					return mountResponsePackage('E',OUT_OF_RANGE,outPackage);
+				}
+			}
+			else {
+				if( stack_desc->first->operand < (INT_MIN / stack_desc->first->next->operand) ) {
+					/* OVER/UNDERFLOW */
+					return mountResponsePackage('E',OUT_OF_RANGE,outPackage);
+				}
+			}
+		}
+		else {
+			if( stack_desc->first->operand > 0 ) {
+				if( stack_desc->first->next->operand < (INT_MIN / stack_desc->first->operand) ) {
+					/* OVER/UNDERFLOW */
+					return mountResponsePackage('E',OUT_OF_RANGE,outPackage);
+				}
+			}
+			else {
+				if( (stack_desc->first->next->operand != 0) && (stack_desc->first->operand < (INT_MAX / stack_desc->first->next->operand)) ) {
+					/* OVER/UNDERFLOW */
+					return mountResponsePackage('E',OUT_OF_RANGE,outPackage);
+				}
+			}
+		}
+
+		prod = stack_desc->first->next->operand * stack_desc->first->operand;
+		reorganizeStack(stack_desc,prod);
+		return mountResponsePackage('V',OK,outPackage);
+	} else {
+		/* Not enough operands */
+		return mountResponsePackage('E',BAD_STACK,outPackage);
+	}
 }
-void cmd_reminder(STACK_DESCRIPTOR *stack_desc){
+
+
+PACKAGE cmd_reminder (STACK_DESCRIPTOR *stack_desc, PACKAGE outPackage) {	/* if 'E' is returned, the operation was not performed; stack is unchanged */
 	int rem;
-	rem = stack_desc->first->operand % stack_desc->first->next->operand;
-	reorganizeStack(stack_desc,rem);	
+
+	if( stack_desc->count >= 2 ) {
+		if( stack_desc->first->operand != 0 ) {
+
+			if ( (stack_desc->first->next->operand == LONG_MIN) && (stack_desc->first->operand == -1) ) {
+				/* OVER/UNDERFLOW */
+				return mountResponsePackage('E',OUT_OF_RANGE,outPackage);
+			} else {
+				rem = stack_desc->first->next->operand % stack_desc->first->operand;
+				reorganizeStack(stack_desc,rem);
+				return mountResponsePackage('V',OK,outPackage);
+			}
+		} else {
+			/* division by 0 */
+			return mountResponsePackage('E',DIV_0,outPackage);
+		}
+	} else {
+		/* Not enough operands */
+		return mountResponsePackage('E',BAD_STACK,outPackage);
+	}
 }
 
-int cmd_R(STACK_DESCRIPTOR *stack_desc){
-	int result = cmd_T(stack_desc);
-	stack_desc->count = 0;
-	free(stack_desc->first);
-	return result; /*It only calls the T command to get the first value in the stack.
-					*** IT NEEDS TO BE REVISED SINCE NOT NECESSARILY THE VALUE IN THE
-						TOP OF STACK IS THE FINAL RESULT!!*** */
+
+PACKAGE cmd_R (STACK_DESCRIPTOR *stack_desc, PACKAGE outPackage) {		/* stack is cleaned in the process regardless of errors */
+
+	if( stack_desc->count > 0 ) {
+		if( stack_desc->count == 1 ) {
+			resetStack(stack_desc);
+			return mountResponsePackage('V', stack_desc->first->operand, outPackage);
+		} else {
+			/* result is only partial; stack is bigger than expected */
+			resetStack(stack_desc);
+			return mountResponsePackage('E', BIG_STACK, outPackage);
+		}
+	} else {
+		/* Stack is empty */
+		resetStack(stack_desc);
+		return mountResponsePackage('E',BAD_STACK,outPackage);
+	}
 }
 
-void reorganizeStack(STACK_DESCRIPTOR *stack_desc, int newValue){
+
+void reorganizeStack (STACK_DESCRIPTOR *stack_desc, int newValue) {
 	STACK_ELEMENT *toEliminate;
 	stack_desc->first->next->operand = newValue;
-	toEliminate = stack_desc->first; 
+	toEliminate = stack_desc->first;
 	stack_desc->first = stack_desc->first->next;
 	stack_desc->count--;
 	free(toEliminate);
+}
+
+
+void resetStack (STACK_DESCRIPTOR *stack_desc) {
+	int i;
+	STACK_ELEMENT *aux, *aux_eliminate;
+
+	aux = stack_desc->first;
+
+	stack_desc->first = NULL;
+	stack_desc->count = 0;
+
+/*	for(i=0; i<stack_desc->count; i++) {*/
+	while( aux != NULL ) {
+		aux_eliminate = aux;
+		aux = aux->next;
+		free(aux_eliminate);
+	}
 }

@@ -14,11 +14,13 @@
 #ifndef __NEWVAR_H__
 #define __NEWVAR_H__
 
+
 /* communication unit */
 typedef struct package {
 	char msg;		/* message / command */
 	char num[8];	/* number or padding */
 } PACKAGE;
+
 
 /* clients whose sessions is already opened */
 typedef struct client {
@@ -27,6 +29,7 @@ typedef struct client {
 	struct client *previous;
 	struct stack_descriptor *stack_desc;
 } CLIENT;
+
 
 /* A descriptor to control the "ring buffer", containing a pointer to the next client to be served and a counter that represents
    the total number of clients with session opened with the server*/
@@ -37,11 +40,13 @@ typedef struct clients_descriptor {
 	int count;
 } CLIENTS_DESCRIPTOR;
 
+
 /* Operand Stack; one per client */
 typedef struct stack_element {
 	int operand; /*An operand in the stack*/
 	struct stack_element *next;
 } STACK_ELEMENT;
+
 
 /* Stack status; one per client */
 typedef struct stack_descriptor {

@@ -65,7 +65,7 @@ runS:
 
 runC:
 	clear
-	./bin/yascC.exe 10.24.32.112 50000 -g
+	./bin/yascC.exe ubuntu 50000 -g
 
 #############################################################
 # Maintenance

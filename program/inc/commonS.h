@@ -21,12 +21,10 @@
 
 /* Global defines & macros */
 
-#define MIN_WORKERS 10
+#define MIN_WORKERS 1
 #define MAX_WORKERS 100
 #define MAX_CLIENTS 10		/* soft limit (needs to be tested) due to lack of synchronization there may be a few more */
-#define V 'V'
-#define E 'E'
-#define I 'I'
+
 
 /* Global Variables; remember to initialize */
 

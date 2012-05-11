@@ -230,7 +230,7 @@ void* slaveWork() {
 
 
 void handle_client ( CLIENT client ) {
-	int /*num_bytes=0,*/ num[1],resp;
+	int num[1];
 	PACKAGE outPackage, inPackage;
 
 	signal(SIGPIPE,SIG_IGN);	/* instead of handling the signal, we handle write() error */
@@ -246,75 +246,46 @@ void handle_client ( CLIENT client ) {
 		switch(inPackage.msg){
 			case 'D':
 					sscanf(inPackage.num,"%X", (unsigned int *) num);
-					cmd_D(num,client.stack_desc);
-					outPackage = mountResponsePackage(V,0,outPackage);
+					outPackage = cmd_D(num,client.stack_desc,outPackage);
 					break;
 			case '+':
-					if (client.stack_desc->count >= 2){
-						cmd_add(client.stack_desc);
-						outPackage = mountResponsePackage(V,0,outPackage);
-					} else {
-						outPackage = mountResponsePackage(E,0,outPackage);
-					}
+					outPackage = cmd_add(client.stack_desc,outPackage);
 					break;
 			case '-':
-					if (client.stack_desc->count >= 2){
-						cmd_sub(client.stack_desc);
-						outPackage = mountResponsePackage(V,0,outPackage);
-					} else {
-						outPackage = mountResponsePackage(E,0,outPackage);
-					}
+					outPackage = cmd_sub(client.stack_desc,outPackage);
 					break;
 			case '*':
-					if (client.stack_desc->count >= 2){
-						cmd_mult(client.stack_desc);
-						outPackage = mountResponsePackage(V,0,outPackage);
-					} else {
-						outPackage = mountResponsePackage(E,0,outPackage);
-					}
+					outPackage = cmd_mult(client.stack_desc,outPackage);
 					break;
 			case '/':
-					if (client.stack_desc->count >= 2 && client.stack_desc->first->next->operand != 0){
-						/*It has at least two operands and the divisor is not zero*/
-						cmd_div(client.stack_desc);
-						outPackage = mountResponsePackage(V,0,outPackage);
-					} else {
-						outPackage = mountResponsePackage(E,0,outPackage);
-					}
+					outPackage = cmd_div(client.stack_desc,outPackage);
 					break;
 			case '%':
-					if (client.stack_desc->count >= 2){
-						cmd_reminder(client.stack_desc);
-						outPackage = mountResponsePackage(V,0,outPackage);
-					} else {
-						outPackage = mountResponsePackage(E,0,outPackage);
-					}
+					outPackage = cmd_reminder(client.stack_desc,outPackage);
 					break;
 			case 'R':
-					resp = cmd_R(client.stack_desc);
-					outPackage = mountResponsePackage(V,resp,outPackage);
+					outPackage = cmd_R(client.stack_desc,outPackage);
 					break;
 			case 'T':
-					resp = cmd_T(client.stack_desc);
-					outPackage = mountResponsePackage(V,resp,outPackage);
+					outPackage = cmd_T(client.stack_desc,outPackage);
 					break;
 			case 'P':
-					resp = cmd_P(client.stack_desc);
-					outPackage = mountResponsePackage(V,resp,outPackage);
+					outPackage = mountResponsePackage('V', client.stack_desc->count, outPackage);
 					break;
 			case 'I':
-					outPackage = mountResponsePackage(V,0,outPackage);
+					outPackage = mountResponsePackage('V',OK,outPackage);
 					break;
 			case 'K':
 					remove_client(client.fd);
 					close(client.fd);
 					return;
 					break;
+			default:
+					outPackage = mountResponsePackage('E',BAD_CMD,outPackage);	/* bad command */
 		}
 /* DEMO */
 		/*sscanf(inPackage.num,"%X", (unsigned int *) num);
 		fprintf(stdout, "%c\t%d\n", inPackage.msg, *num);*/
-
 /* DEMO */
 
 		errno = 0;
