@@ -51,7 +51,7 @@ int main( int argc, char *argv[] ) {
 
 	/* >>> MASTER thread <<< */
 	createInitialServerConditions();
-
+	pid = getpid();
 	/* argument parsing; setup */
 	if( argc == 2 ) {
 
@@ -101,8 +101,10 @@ int main( int argc, char *argv[] ) {
 	PTH_CREATE(&poolManager, manage_pool, NULL);
 /*******************************************************/
 
+
 	/* listens for incoming connections; and accepts them */
 	listen(primarySocket,SOMAXCONN);
+
 	while(1) {
 
 		if( clients_desc.count < MAX_CLIENTS ) {	/* as we don't lock the mutex here, MAX_CLIENTS is not an actual maximum, it has some hysteresis !!! needs to be tested */

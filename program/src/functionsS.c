@@ -158,9 +158,6 @@ void add_client ( int FD ) {
 	pthread_mutex_unlock(&p_mutex);
 	/* signal the condition variable - there's a new FD to handle */
 	pthread_cond_signal(&p_cond_var);
-	if( clients_desc.count < MAX_CLIENTS ) {
-		/* signal master to accept more */
-	}
 }
 
 
@@ -197,25 +194,9 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 		}
 	}
 	pthread_mutex_unlock(&p_mutex);
+
+	kill(pid, SIGCONT);
 }
-
-
-/*void create_stack(int fd) {*/
-	/*P.S.: The stack never has 0 elements, except before the first request.*/
-	/*TODO: Implement request process
-
-	if (req->param1 == 'D'){ Is the client trying to send a data?
-
-		STACK_ELEMENT element;
-
-		stack_desc.count++;
-
-		element.operand = req->param2;
-		element.next = stack_desc.first;
-
-		stack_desc.first = &element;
-	}*/
-/*}*/
 
 
 void* slaveWork() {
