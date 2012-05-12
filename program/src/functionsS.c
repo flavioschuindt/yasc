@@ -43,6 +43,11 @@ void createInitialServerConditions () {
 }
 
 
+void thread_suicide () {
+	pthread_exit(NULL);
+}
+
+
 void *parse_line () {
 	int caret=0;
 	char line[MAX_LINE], parameter[MAX_LINE];	/* if parameter is set as smaller than MAX_LINE, it is necessary to implement buffer overrun protection !!! */
@@ -72,24 +77,39 @@ void *parse_line () {
 
 
 void *manage_pool () {
-	int i;
+	int number_of_workers=0;
 	pthread_t slaves[MAX_WORKERS];	/* avoids dynamic allocation by having always the maximum size */
 
-	i=0;
-	while( i < MIN_WORKERS ) {
+	while( number_of_workers < MIN_WORKERS ) {
 
-		PTH_CREATE(&slaves[i], slaveWork, NULL);
-		PTH_DTCH(slaves[i]);
+		PTH_CREATE(&slaves[number_of_workers], slaveWork, NULL);
+		PTH_DTCH(slaves[number_of_workers]);
 
-		i++;
+		number_of_workers++;
 	}
-	pause();
-/*
-1. check rate of increasing work
-1.1 if positive, launch more slaves
-1.2 if negative, kill slaves
-*/
-	pthread_exit(NULL);
+
+	while(1) {
+		sleep(POOL_REFRESH_RATE);
+
+		/* increasing clients */
+		while( (clients_desc.count > ((CLIENTS_PER_SLAVE * number_of_workers) + POOL_HYSTERESIS)) && (number_of_workers < MAX_WORKERS) ) {
+			PTH_CREATE(&slaves[number_of_workers], slaveWork, NULL);
+			PTH_DTCH(slaves[number_of_workers]);
+			number_of_workers++;
+
+				fprintf(stdout,"\nentrou uma thread extra\n");
+				fflush(stdout);
+		}
+
+		/* decreasing clients */
+		while( (clients_desc.count < ((CLIENTS_PER_SLAVE * number_of_workers) + POOL_HYSTERESIS))  && (number_of_workers > MIN_WORKERS) ) {
+			pthread_kill(&slaves[number_of_workers], SIGUSR1); /* starts killing the ones with greater index */
+			number_of_workers--;
+
+				fprintf(stdout,"\nsaiu uma thread\n");
+				fflush(stdout);
+		}
+	}
 	return NULL;
 }
 
@@ -200,6 +220,7 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 
 void* slaveWork() {
 	CLIENT client;
+
 	pthread_mutex_lock(&p_mutex);
 
 	while(1) {
@@ -215,15 +236,13 @@ void* slaveWork() {
 			pthread_mutex_lock(&p_mutex);
 
 		} else {
-			fprintf(stdout,"\nNinguém no server, waiting...\n");
-			fflush(stdout);
 			/*There is no FD in the FDs' list.
 			So, we use condition variables to lock this specific thread and force it to wait until a new FD arrives
 			It's important to note that when we use pthread_cond_wait the thread running at this point will
 			wait until a new FD is available in the list. Also, in this moment the lock is released and it gives
 			access to protected resources to other threads. The return from pthread_cond_wait locks the mutex again. So, we don't
 			need to take care of this*/
-			 	pthread_cond_wait(&p_cond_var, &p_mutex);
+			pthread_cond_wait(&p_cond_var, &p_mutex);
 		}
 	}
 }

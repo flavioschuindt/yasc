@@ -12,6 +12,22 @@
  *************************************************************/
 
 
+#define MAX_LINE 256	/* maximum length for a command line */
+#define COM_SIZE 9 /* (bytes); size of communication package */
+
+
+/* Server codes */
+#define OK 0				/* no error */
+#define BAD_CMD -1			/* commend not identified */
+#define OUT_OF_RANGE 255	/* over/underflow */
+#define BIG_STACK 555		/* stack is bigger than expected */
+#define BAD_STACK 999		/* not enough operands for specified action */
+#define DIV_0 666			/* division by 0 */
+
+
+
+
+/********************** MACROS **************************/
 /* MALLOC */
 #define MALL(p,n) { \
 	if ( ! ((p) = malloc(n * sizeof(*(p)))) ) { \
@@ -44,15 +60,34 @@
 	} \
 }
 
+/* THREAD SIGMASK */
+#define PTH_SIGMSK(set) { \
+	if ( (pthread_sigmask(SIG_BLOCK, &(set), NULL)) != 0 ) { \
+		fprintf(stderr,">> ERROR: could not block signal set.\n>> Aborting.\n"); \
+		exit(-1); \
+	} \
+}
 
-#define MAX_LINE 256	/* maximum length for a command line */
-#define COM_SIZE 9 /* (bytes); size of communication package */
+/* THREAD SIGNAL */
+#define PTH_KILL(thrd,sig) { \
+	if ( (pthread_kill(&slaves[number_of_workers], sig)) != 0 ) { \
+		fprintf(stderr,">> ERROR: could not signal thread.\n>> Aborting.\n"); \
+		exit(-1); \
+	} \
+}
 
+/* SIGNAL ADD SET */
+#define SIG_ADDSET(set,sig) { \
+	if ( (sigaddset(&(set), (sig))) != 0 ) { \
+		fprintf(stderr,">> ERROR: could not set signal mask.\n>> Aborting.\n"); \
+		exit(-1); \
+	} \
+}
 
-/* Server codes */
-#define OK 0				/* no error */
-#define BAD_CMD -1			/* commend not identified */
-#define OUT_OF_RANGE 255	/* over/underflow */
-#define BIG_STACK 555		/* stack is bigger than expected */
-#define BAD_STACK 999		/* not enough operands for specified action */
-#define DIV_0 666			/* division by 0 */
+/* SET EMPTY SIGNAL MASK */
+#define SIG_EMPTYSET(set) { \
+	if ( (sigemptyset(&(set))) != 0 ) { \
+		fprintf(stderr,">> ERROR: could not initialize signal mask.\n>> Aborting.\n"); \
+		exit(-1); \
+	} \
+}

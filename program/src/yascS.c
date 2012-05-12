@@ -28,6 +28,7 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <fcntl.h>
+#include <signal.h>
 
 
 #include <newvar.h>
@@ -42,6 +43,7 @@ int main( int argc, char *argv[] ) {
 
 	int primarySocket, secondarySocket, clientAddr_len;
 	unsigned int port;
+	sigset_t set;
 	struct sockaddr_in serverAddr, clientAddr;
 	char *endptr;
 	pthread_t poolManager, serverManager;
@@ -80,6 +82,16 @@ int main( int argc, char *argv[] ) {
 		fprintf(stderr,">> Setup error!\n>> Too many arguments.\n>> Aborting.\n");
 		exit(-1);
 	}
+
+
+	/* every thread inherits this mask                 *
+	 * allow handling the signal and thus being killed */
+	SIG_EMPTYSET(set);
+	SIG_ADDSET(set,SIGUSR1);
+	PTH_SIGMSK(set);
+	/* every slave inherits this handler */
+	signal(SIGUSR1,thread_suicide);
+	/* to kill threads call 'pthread_kill(pthread_t *, SIGUSR1);' */
 
 
 /** Launch Services ************************************/
