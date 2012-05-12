@@ -79,6 +79,4 @@ void reorganizeStack(STACK_DESCRIPTOR *stack_desc, int newValue);
 void resetStack (STACK_DESCRIPTOR *stack_desc);
 
 
-void wakeUp();
-
 #endif

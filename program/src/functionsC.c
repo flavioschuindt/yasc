@@ -145,17 +145,17 @@ void handleRequest ( char Req, int Data ) {
 			sscanf(inPackage.num,"%X", (unsigned int *) returningData);	/* converts string (hexadecimal integer) to normal integer */
 			alarm(TIME_OUT);
 			if( DBG & 1 ) {
-				if( Req == 'D' ) {
+				/*if( Req == 'D' ) {
 					fprintf(fout, "DEBUG:\t%c%d=> : =>%c\n", Req, Data, inPackage.msg);
 				} else if( (Req == 'R') || (Req == 'T') || (Req == 'P') ){
-					fprintf(fout, "DEBUG:\t%c=> : =>%c%d\n", Req, inPackage.msg, *returningData);
-				} else {
+				*/	fprintf(fout, "DEBUG:\t%c=> : =>%c%d\n", Req, inPackage.msg, *returningData);
+				/*} else {
 					fprintf(fout, "DEBUG:\t%c=> : =>%c\n", Req, inPackage.msg);
-				}
-			} else if( ((Req == 'R') || (Req == 'T') || (Req == 'P')) && (inPackage.msg == 'V') ) {
-				fprintf(fout, ":: %d\n", *returningData);
+				}*/
+			/*} else if( ((Req == 'R') || (Req == 'T') || (Req == 'P')) && (inPackage.msg == 'V') ) {
+				fprintf(fout, ":: %d\n", *returningData);*/
 			} else if( inPackage.msg == 'E' ) {
-				fprintf(fout, ":: Error!\n:: \"%c\" Command failed.\n", Req);
+				fprintf(fout, ":: Error!\n:: \"%c\" Command failed with error code %d.\n", Req, *returningData);
 			} else if( inPackage.msg == 'I' ) {
 				fprintf(fout, ":: Server error!\n:: Stack reinitialized.\n");
 			}
@@ -241,7 +241,6 @@ void end_session ( int mode ) {
 	errno = 0;
 	write(clientSocket,(void *)&outPackage,COM_SIZE);
 	if( (errno == EPIPE) || (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ECONNRESET) ){
-		close(clientSocket);
 		if( mode == 0 ) {		/* if it is called from within 'EXIT' procedure, it assumes that this error is normal; ex. 'K EXIT' shall not issue this message */
 			fprintf(fout, ":: Error!\n:: Failed to contact server.\n");
 		}
@@ -249,7 +248,6 @@ void end_session ( int mode ) {
 		fprintf(fout, "DEBUG:\tK=>\n" );
 	}
 
-	shutdown(clientSocket, SHUT_WR);
 	close(clientSocket);
 }
 

@@ -17,7 +17,7 @@
 
 
 /* Server codes */
-#define OK 0				/* no error */
+#define OK 0				/* no error; only use with message 'V' */
 #define BAD_CMD -1			/* commend not identified */
 #define OUT_OF_RANGE 255	/* over/underflow */
 #define BIG_STACK 555		/* stack is bigger than expected */
@@ -61,8 +61,8 @@
 }
 
 /* THREAD SIGMASK */
-#define PTH_SIGMSK(set) { \
-	if ( (pthread_sigmask(SIG_BLOCK, &(set), NULL)) != 0 ) { \
+#define PTH_SIGMSK(mode,set) { \
+	if ( (pthread_sigmask(mode, &(set), NULL)) != 0 ) { \
 		fprintf(stderr,">> ERROR: could not block signal set.\n>> Aborting.\n"); \
 		exit(-1); \
 	} \
