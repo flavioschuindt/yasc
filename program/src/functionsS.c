@@ -195,7 +195,7 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 	}
 	pthread_mutex_unlock(&p_mutex);
 
-	kill(pid, SIGCONT);
+	kill(pid, SIGCONT);	/* signals master to accept more clients */
 }
 
 
