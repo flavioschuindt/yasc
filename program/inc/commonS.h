@@ -36,6 +36,8 @@
 
 EXTERN CLIENTS_DESCRIPTOR clients_desc;
 
+EXTERN sigset_t soft_kill_set;		/* mask for signals; common for every thread */
+
 EXTERN pthread_t master_pthread_t;	/* master ID */
 EXTERN pthread_mutex_t p_mutex;	/* MUTEX to control access to protected resources */
 EXTERN pthread_cond_t  p_cond_var; /* global condition variable for our program */

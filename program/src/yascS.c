@@ -43,7 +43,7 @@ int main( int argc, char *argv[] ) {
 
 	int primarySocket, secondarySocket, clientAddr_len;
 	unsigned int port;
-	sigset_t set;
+/*	sigset_t set;*/
 	struct sockaddr_in serverAddr, clientAddr;
 	char *endptr;
 	pthread_t poolManager, serverManager;
@@ -86,11 +86,11 @@ int main( int argc, char *argv[] ) {
 
 	/* every thread inherits this mask                     *
 	 * allowing to handle the signal and thus being killed */
-	SIG_EMPTYSET(set);
-	SIG_ADDSET(set,SIGUSR1);
-	PTH_SIGMSK(SIG_BLOCK,set);
+	SIG_EMPTYSET(soft_kill_set);
+	SIG_ADDSET(soft_kill_set,SIGUSR1);
+	/*PTH_SIGMSK(SIG_BLOCK,set);*/
 	/* every slave inherits this handler */
-	signal(SIGUSR1,thread_suicide);
+	/*signal(SIGUSR1,thread_suicide);*/
 	/* to kill threads call 'pthread_kill(pthread_t *, SIGUSR1);' */
 
 

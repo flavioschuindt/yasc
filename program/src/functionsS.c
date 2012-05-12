@@ -208,21 +208,29 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 
 void* slaveWork() {
 	CLIENT client;
+	sigset_t pending_signals;
 
+	/* blocks signal so that it doesn't interrupt while attending to a client */
+	PTH_SIGMSK(SIG_BLOCK,soft_kill_set);
+
+	/* RC */
 	pthread_mutex_lock(&p_mutex);
-
 	while(1) {
 		/* Always stays in a loop getting FDs from the list and processing */
 		if( clients_desc.count > 0 ) { /* Is there any FD in the list waiting to be processed? */
-
 			client = get_client();
-
 			pthread_mutex_unlock(&p_mutex); /*Ok, now others threads can access the list and process other requests*/
+	/* RC */
 
 			handle_client(client);
 
-			pthread_mutex_lock(&p_mutex);
+			/* is it time to die already? ;( */
+			sigpending(&pending_signals);
+			if( sigismember(&pending_signals, SIGUSR1) ) {
+				pthread_exit(NULL);
+			}
 
+			pthread_mutex_lock(&p_mutex);
 		} else {
 			/*There is no FD in the FDs' list.
 			So, we use condition variables to lock this specific thread and force it to wait until a new FD arrives
