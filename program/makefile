@@ -24,7 +24,7 @@ vpath %.h inc/
 CC = gcc
 # Libs: -pthread: threads; -lm: math
 LIBS = -pthread
-#DEBUG = -ggdb
+#DEBUG = -g
 WEXTRA = -Wextra
 
 CFLAGS = -Wall $(WEXTRA) -ansi -pedantic -D_POSIX_SOURCE $(DEBUG) $(LIBS) -c -I inc/ -o

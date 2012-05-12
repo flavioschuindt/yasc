@@ -51,7 +51,7 @@ int main( int argc, char *argv[] ) {
 
 	/* >>> MASTER thread <<< */
 	createInitialServerConditions();
-	master_pthread_t = pthread_self();
+
 	/* argument parsing; setup */
 	if( argc == 2 ) {
 
@@ -84,11 +84,11 @@ int main( int argc, char *argv[] ) {
 	}
 
 
-	/* every thread inherits this mask                 *
-	 * allow handling the signal and thus being killed */
+	/* every thread inherits this mask                     *
+	 * allowing to handle the signal and thus being killed */
 	SIG_EMPTYSET(set);
 	SIG_ADDSET(set,SIGUSR1);
-	PTH_SIGMSK(set);
+	PTH_SIGMSK(SIG_BLOCK,set);
 	/* every slave inherits this handler */
 	signal(SIGUSR1,thread_suicide);
 	/* to kill threads call 'pthread_kill(pthread_t *, SIGUSR1);' */

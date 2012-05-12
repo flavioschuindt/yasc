@@ -33,6 +33,8 @@
 
 
 void createInitialServerConditions () {
+	master_pthread_t = pthread_self();
+
 	pthread_mutex_init(&p_mutex, NULL);
 	pthread_cond_init(&p_cond_var,NULL);
 
@@ -95,21 +97,23 @@ void *manage_pool () {
 			PTH_CREATE(&slaves[number_of_workers], slaveWork, NULL);
 			PTH_DTCH(slaves[number_of_workers]);
 			number_of_workers++;
-
-				fprintf(stdout,"\n+1\n");
+/* DEMO */
+				fprintf(stdout,"+1\n");
 				fflush(stdout);
+/* DEMO */
 		}
 
 		/* decreasing clients */
 		while( (clients_desc.count < ((CLIENTS_PER_SLAVE * number_of_workers) + POOL_HYSTERESIS))  && (number_of_workers > MIN_WORKERS) ) {
-			pthread_kill(slaves[number_of_workers], SIGUSR1); /* starts killing the ones with greater index */
+			pthread_kill(&slaves[number_of_workers], SIGUSR1); /* starts killing the ones with greater index */
 			number_of_workers--;
-
-				fprintf(stdout,"\n-1\n");
+/* DEMO */
+				fprintf(stdout,"-1\n");
 				fflush(stdout);
+/* DEMO */
 		}
 	}
-	return NULL;
+	pthread_exit(NULL);
 }
 
 
@@ -169,8 +173,9 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 	client = clients_desc.first;
 	for(i=0; i < clients_desc.count; i++) {
 		if(client->fd == client_fd) {
-			/* FD found. Rearranging the list. */
+		/* FD found. Rearranging the list. */
 			if (client == clients_desc.first) {		/* Was the first one found? */
+
 				if (clients_desc.count == 1) {		/* Is there only one node in the list? */
 					clients_desc.first = NULL;
 					clients_desc.last = NULL;
@@ -178,23 +183,26 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 					client->next->previous = NULL;		/* Second is the first now */
 					clients_desc.first = client->next;	/* Second is the first now */
 				}
+
 			} else if (client == clients_desc.last) {	/* Was the last one found? */
 				client->previous->next = NULL;			/* Penultimate is the last now */
 				clients_desc.last = client->previous;	/* Penultimate is the last now */
-			} else {		/* Was founded in the middle of list? */
+
+			} else {	/* Was founded in the middle of list? */
 				client->previous->next = client->next;
 				client->next->previous = client->previous;
 			}
 			clients_desc.count--;
 			free(client); /* Remove the node */
 			break;
+		/* FD not found */
 		} else {
 			client=client->next;
 		}
 	}
 	pthread_mutex_unlock(&p_mutex);
 
-	/*pthread_kill(master_pthread_t, SIGCONT);*/	/* signals master to accept more clients */
+	/*pthread_kill(&master_pthread_t, SIGCONT);*/	/* signals master to accept more clients */
 }
 
 
@@ -242,6 +250,11 @@ void handle_client ( CLIENT client ) {
 			remove_client(client.fd);
 		}
 
+/* DEMO */
+		sscanf(inPackage.num,"%X", (unsigned int *) num);
+		fprintf(stdout, "%c\t%d\n", inPackage.msg, *num);
+/* DEMO */
+
 		switch(inPackage.msg){
 			case 'D':
 					sscanf(inPackage.num,"%X", (unsigned int *) num);
@@ -281,10 +294,6 @@ void handle_client ( CLIENT client ) {
 			default:
 					outPackage = mountResponsePackage('E',BAD_CMD,outPackage);	/* bad command */
 		}
-/* DEMO */
-		/*sscanf(inPackage.num,"%X", (unsigned int *) num);
-		fprintf(stdout, "%c\t%d\n", inPackage.msg, *num);*/
-/* DEMO */
 
 		errno = 0;
 		write(client.fd,(void *)&outPackage,COM_SIZE);

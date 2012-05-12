@@ -154,6 +154,7 @@ void handleRequest ( char Req, int Data ) {
 				}*/
 			} else if( ((Req == 'R') || (Req == 'T') || (Req == 'P')) && (inPackage.msg == 'V') ) {
 				fprintf(fout, ":: %d\n", *returningData);
+
 			} else if( inPackage.msg == 'E' ) {
 				fprintf(fout, ":: Error!\n:: \"%c\" Command failed with error code %d.\n", Req, *returningData);
 			} else if( inPackage.msg == 'I' ) {
@@ -247,6 +248,7 @@ void end_session ( int mode ) {
 	} else 	if( DBG & 1 ) {
 		fprintf(fout, "DEBUG:\tK=>\n" );
 	}
+
 	close(clientSocket);
 }
 

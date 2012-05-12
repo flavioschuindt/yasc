@@ -61,8 +61,8 @@
 }
 
 /* THREAD SIGMASK */
-#define PTH_SIGMSK(set) { \
-	if ( (pthread_sigmask(SIG_BLOCK, &(set), NULL)) != 0 ) { \
+#define PTH_SIGMSK(mode,set) { \
+	if ( (pthread_sigmask(mode, &(set), NULL)) != 0 ) { \
 		fprintf(stderr,">> ERROR: could not block signal set.\n>> Aborting.\n"); \
 		exit(-1); \
 	} \
