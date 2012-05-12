@@ -7,12 +7,11 @@
 #  Flávio Schuindt     nº74570     MEEC                     #
 #  _______________________________________________________  #
 #                                                           #
-#  MAKEFILE   v1.2                                          #
+#  MAKEFILE   v1.3                                          #
 #                                                           #
 #     compile:                  make [S(erver) / C(lient)]  #
 #     quick run:                make run*                   #
 #     clean:                    make clean                  #
-#     clean for distribution:   make distclean              #
 #                                                           #
 #############################################################
 
@@ -31,30 +30,46 @@ CFLAGS = -Wall $(WEXTRA) -ansi -pedantic -D_POSIX_SOURCE $(DEBUG) $(LIBS) -c -I 
 LFLAGS = -Wall $(WEXTRA) -ansi -pedantic -D_POSIX_SOURCE $(DEBUG) $(LIBS) -o
 
 .c.o:
-	$(CC) $(CFLAGS) obj/$@ $<
+	@ $(CC) $(CFLAGS) obj/$@ $<
 
 
 # macros and vpath don't work well with *.o's !?
 all: C S
 
-S: yascS.o functionsS.o commandsHandler.o
-	$(CC) $(LFLAGS) bin/yascS.exe obj/yascS.o obj/functionsS.o obj/commandsHandler.o
+S:
+	@ echo ""
+	@ echo "======================================================"
+	@ echo "===> Compiling Server"
+	@ echo "======================================================"
+	@ make yascS.exe
+	@ echo "______________________________________________________"
 
-C: yascC.o functionsC.o
-	$(CC) $(LFLAGS) bin/yascC.exe obj/yascC.o obj/functionsC.o
+C:
+	@ echo ""
+	@ echo "======================================================"
+	@ echo "===> Compiling Client"
+	@ echo "======================================================"
+	@ make yascC.exe
+	@ echo "______________________________________________________"
 
+
+yascS.exe: yascS.o functionsS.o commandsHandler.o
+	@ $(CC) $(LFLAGS) bin/yascS.exe obj/yascS.o obj/functionsS.o obj/commandsHandler.o
+
+yascC.exe: yascC.o functionsC.o
+	@ $(CC) $(LFLAGS) bin/yascC.exe obj/yascC.o obj/functionsC.o
 
 
 yascS.o: yascS.c prototypesS.h commonS.h globalHeader.h newvar.h
 
-yascC.o: yascC.c prototypesC.h commonC.h globalHeader.h
-
-
-functionsC.o: functionsC.c prototypesC.h commonC.h globalHeader.h newvar.h
-
 functionsS.o: functionsS.c prototypesS.h commonS.h globalHeader.h newvar.h
 
 commandsHandler.o: commandsHandler.c prototypesS.h newvar.h
+
+
+yascC.o: yascC.c prototypesC.h commonC.h globalHeader.h
+
+functionsC.o: functionsC.c prototypesC.h commonC.h globalHeader.h newvar.h
 
 
 #############################################################
@@ -71,6 +86,3 @@ runC:
 # Maintenance
 clean:
 	rm -f obj/*.o bin/*.exe
-
-distclean:
-	rm -f obj/*.o

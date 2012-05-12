@@ -18,12 +18,11 @@
 
 /* Server codes */
 #define OK 0				/* no error; only use with message 'V' */
-#define BAD_CMD -1			/* commend not identified */
+#define BAD_CMD -1			/* command not identified */
 #define OUT_OF_RANGE 255	/* over/underflow */
+#define DIV_0 666			/* division by 0 */
 #define BIG_STACK 555		/* stack is bigger than expected */
 #define BAD_STACK 999		/* not enough operands for specified action */
-#define DIV_0 666			/* division by 0 */
-
 
 
 
