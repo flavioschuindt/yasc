@@ -51,7 +51,7 @@ int main( int argc, char *argv[] ) {
 
 	/* >>> MASTER thread <<< */
 	createInitialServerConditions();
-	pid = getpid();
+	master_pthread_t = pthread_self();
 	/* argument parsing; setup */
 	if( argc == 2 ) {
 

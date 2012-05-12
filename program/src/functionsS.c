@@ -72,7 +72,6 @@ void *parse_line () {
 	}
 
 	pthread_exit(NULL);
-	return NULL;
 }
 
 
@@ -97,16 +96,16 @@ void *manage_pool () {
 			PTH_DTCH(slaves[number_of_workers]);
 			number_of_workers++;
 
-				fprintf(stdout,"\nentrou uma thread extra\n");
+				fprintf(stdout,"\n+1\n");
 				fflush(stdout);
 		}
 
 		/* decreasing clients */
 		while( (clients_desc.count < ((CLIENTS_PER_SLAVE * number_of_workers) + POOL_HYSTERESIS))  && (number_of_workers > MIN_WORKERS) ) {
-			pthread_kill(&slaves[number_of_workers], SIGUSR1); /* starts killing the ones with greater index */
+			pthread_kill(slaves[number_of_workers], SIGUSR1); /* starts killing the ones with greater index */
 			number_of_workers--;
 
-				fprintf(stdout,"\nsaiu uma thread\n");
+				fprintf(stdout,"\n-1\n");
 				fflush(stdout);
 		}
 	}
@@ -195,7 +194,7 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 	}
 	pthread_mutex_unlock(&p_mutex);
 
-	kill(pid, SIGCONT);	/* signals master to accept more clients */
+	pthread_kill(master_pthread_t, SIGCONT);	/* signals master to accept more clients */
 }
 
 
