@@ -22,10 +22,13 @@
 /* Global defines & macros **********************/
 
 /* SERVER settings */
-#define MIN_WORKERS 2
+#define MIN_WORKERS 1			/* can be set to 0 BUT has a side effect: slaveWork() is almost always  blocked *
+								 * and if there were threads to kill while there were no clients at all, than   *
+								 * the thread would only be killed when the conditional mutex would kick off    *
+								 * (with a new client) thus killing a thread and launching one right afterwards */
 #define MAX_WORKERS 10
 #define MAX_CLIENTS 10			/* soft limit (needs to be tested) due to lack of synchronization there may be a few more */
-#define POOL_REFRESH_RATE 5		/* [seconds] refresh rate for the pool size */
+#define POOL_REFRESH_RATE 1		/* [seconds] refresh rate for the pool size */
 #define POOL_HYSTERESIS 0		/* hysteresis while upgrading the pool; note that the refresh rate also introduces hysteresis, but in an unspecified amount *
 								 * represents a number of clients that may be added / removed without updating the pool                                     */
 #define CLIENTS_PER_SLAVE ( MAX_CLIENTS / MAX_WORKERS )		/* average number of clients per worker; soft rule: see other settings */
@@ -43,6 +46,6 @@ EXTERN pthread_mutex_t p_mutex;	/* MUTEX to control access to protected resource
 EXTERN pthread_cond_t  p_cond_var; /* global condition variable for our program */
 
 
-/* to avoid warnings from missing sigthread.h; it generates other misleading warnings; don't uncomment */
-/*extern int pthread_kill (pthread_t __threadid, int __signo);
-extern int pthread_sigmask (int __how,__const __sigset_t *__restrict __newmask,__sigset_t *__restrict __oldmask);*/
+/* to avoid warnings from missing sigthread.h */
+extern int pthread_kill (pthread_t __threadid, int __signo);
+extern int pthread_sigmask (int __how,__const __sigset_t *__restrict __newmask,__sigset_t *__restrict __oldmask);

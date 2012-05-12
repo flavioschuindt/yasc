@@ -105,12 +105,8 @@ void *manage_pool () {
 
 		/* decreasing clients */
 		while( (clients_desc.count < ((CLIENTS_PER_SLAVE * number_of_workers) + POOL_HYSTERESIS))  && (number_of_workers > MIN_WORKERS) ) {
-			pthread_kill(&slaves[number_of_workers], SIGUSR1); /* starts killing the ones with greater index */
 			number_of_workers--;
-/* DEMO */
-				fprintf(stdout,"-1\n");
-				fflush(stdout);
-/* DEMO */
+			pthread_kill(slaves[number_of_workers], SIGINT); /* starts killing the ones with greater index */
 		}
 	}
 	pthread_exit(NULL);
@@ -202,7 +198,7 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 	}
 	pthread_mutex_unlock(&p_mutex);
 
-	/*pthread_kill(&master_pthread_t, SIGCONT);*/	/* signals master to accept more clients */
+	/*pthread_kill(master_pthread_t, SIGCONT);*/	/* signals master to accept more clients */
 }
 
 
@@ -213,34 +209,44 @@ void* slaveWork() {
 	/* blocks signal so that it doesn't interrupt while attending to a client */
 	PTH_SIGMSK(SIG_BLOCK,soft_kill_set);
 
-	/* RC */
+
 	pthread_mutex_lock(&p_mutex);
 	while(1) {
 		/* Always stays in a loop getting FDs from the list and processing */
 		if( clients_desc.count > 0 ) { /* Is there any FD in the list waiting to be processed? */
 			client = get_client();
-			pthread_mutex_unlock(&p_mutex); /*Ok, now others threads can access the list and process other requests*/
-	/* RC */
+			pthread_mutex_unlock(&p_mutex);
+			/* Ok, now others threads can access the list and process other requests */
 
 			handle_client(client);
-
+			/* KILLING ZONE *******************************/
+			/* it has to be outside the RC !!! */
 			/* is it time to die already? ;( */
-			sigpending(&pending_signals);
-			if( sigismember(&pending_signals, SIGUSR1) ) {
-				pthread_exit(NULL);
+			if( sigpending(&pending_signals) < 0 ) {
+				fprintf(stdout,">> ERROR!\n>> A slave failed to check pending signals.\n>> Killing the slave. Another one shall be issued if necessary.\n");
+				fflush(stdout);
+				break;
+			} else if( sigismember(&pending_signals, SIGINT) ) {
+				break;
 			}
+			/***********************************************/
 
 			pthread_mutex_lock(&p_mutex);
 		} else {
+			pthread_cond_wait(&p_cond_var, &p_mutex);
 			/*There is no FD in the FDs' list.
 			So, we use condition variables to lock this specific thread and force it to wait until a new FD arrives
 			It's important to note that when we use pthread_cond_wait the thread running at this point will
 			wait until a new FD is available in the list. Also, in this moment the lock is released and it gives
 			access to protected resources to other threads. The return from pthread_cond_wait locks the mutex again. So, we don't
 			need to take care of this*/
-			pthread_cond_wait(&p_cond_var, &p_mutex);
 		}
 	}
+/* DEMO */
+	fprintf(stdout,"Another one bites the dust.\n");
+	fflush(stdout);
+/* DEMO */
+	pthread_exit(NULL);
 }
 
 

@@ -87,7 +87,7 @@ int main( int argc, char *argv[] ) {
 	/* every thread inherits this mask                     *
 	 * allowing to handle the signal and thus being killed */
 	SIG_EMPTYSET(soft_kill_set);
-	SIG_ADDSET(soft_kill_set,SIGUSR1);
+	SIG_ADDSET(soft_kill_set,SIGINT);
 	/*PTH_SIGMSK(SIG_BLOCK,set);*/
 	/* every slave inherits this handler */
 	/*signal(SIGUSR1,thread_suicide);*/
