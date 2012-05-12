@@ -118,7 +118,8 @@ int main( int argc, char *argv[] ) {
 			add_client(secondarySocket);
 
 		} else {		/* enough clients for now */
-			pause();
+			/*sleep(DOORMAN_DOZE);*/
+			/*pause();*/
 		}
 	}
 

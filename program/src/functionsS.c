@@ -170,18 +170,18 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 	for(i=0; i < clients_desc.count; i++) {
 		if(client->fd == client_fd) {
 			/* FD found. Rearranging the list. */
-			if (client == clients_desc.first) {	/* Was the first one found? */
-				if (clients_desc.count == 1) {	/* Is there only one node in the list? */
+			if (client == clients_desc.first) {		/* Was the first one found? */
+				if (clients_desc.count == 1) {		/* Is there only one node in the list? */
 					clients_desc.first = NULL;
 					clients_desc.last = NULL;
 				} else {
-					client->next->previous = NULL; /*Second is the first now*/
-					clients_desc.first = client->next; /*Second is the first now*/
+					client->next->previous = NULL;		/* Second is the first now */
+					clients_desc.first = client->next;	/* Second is the first now */
 				}
-			} else if (client == clients_desc.last) { /* Was the last one found? */
-				client->previous->next = NULL; /* Penultimate is the last now */
-				clients_desc.last = client->previous; /* Penultimate is the last now */
-			} else { /* Was founded in the middle of list? */
+			} else if (client == clients_desc.last) {	/* Was the last one found? */
+				client->previous->next = NULL;			/* Penultimate is the last now */
+				clients_desc.last = client->previous;	/* Penultimate is the last now */
+			} else {		/* Was founded in the middle of list? */
 				client->previous->next = client->next;
 				client->next->previous = client->previous;
 			}
@@ -194,7 +194,7 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 	}
 	pthread_mutex_unlock(&p_mutex);
 
-	pthread_kill(master_pthread_t, SIGCONT);	/* signals master to accept more clients */
+	/*pthread_kill(master_pthread_t, SIGCONT);*/	/* signals master to accept more clients */
 }
 
 
@@ -238,8 +238,8 @@ void handle_client ( CLIENT client ) {
 	read(client.fd,(void *)&inPackage,COM_SIZE);
 	if (errno != EWOULDBLOCK){
 		if( (errno == EAGAIN) || (errno == ENOTCONN) || (errno == ECONNRESET) || (errno == ETIMEDOUT) ){
-			remove_client(client.fd);
 			close(client.fd);
+			remove_client(client.fd);
 		}
 
 		switch(inPackage.msg){
@@ -275,10 +275,9 @@ void handle_client ( CLIENT client ) {
 					outPackage = mountResponsePackage('V',OK,outPackage);
 					break;
 			case 'K':
-					remove_client(client.fd);
 					close(client.fd);
-					return;
-					break;
+					remove_client(client.fd);
+					return;		/* nothing else to do */
 			default:
 					outPackage = mountResponsePackage('E',BAD_CMD,outPackage);	/* bad command */
 		}
@@ -290,8 +289,8 @@ void handle_client ( CLIENT client ) {
 		errno = 0;
 		write(client.fd,(void *)&outPackage,COM_SIZE);
 		if( (errno == EPIPE) || (errno == EAGAIN) || (errno == ECONNRESET) ){
-			remove_client(client.fd);
 			close(client.fd);
+			remove_client(client.fd);
 		}
 	}
 }

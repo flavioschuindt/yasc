@@ -29,7 +29,7 @@
 #define POOL_HYSTERESIS 0		/* hysteresis while upgrading the pool; note that the refresh rate also introduces hysteresis, but in an unspecified amount *
 								 * represents a number of clients that may be added / removed without updating the pool                                     */
 #define CLIENTS_PER_SLAVE ( MAX_CLIENTS / MAX_WORKERS )		/* average number of clients per worker; soft rule: see other settings */
-
+#define DOORMAN_DOZE 5			/* [seconds] period of inactivity of master when MAX_CLIENTS is reached; wakes up to see if he can allow anyone else in */
 
 /* Global Variables; remember to initialize */
 
