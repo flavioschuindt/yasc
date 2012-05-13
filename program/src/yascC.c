@@ -7,7 +7,7 @@
  *  Flávio Schuindt     nº74570     MEEC                     *
  *  _______________________________________________________  *
  *                                                           *
- *  YASC Client  v0.1                                        *
+ *  YASC Client  v0.9                                        *
  *     expected arguments                                    *
  *      <name> <port>     specify server                     *
  *                                                           *
@@ -108,7 +108,9 @@ int main( int argc, char *argv[] ) {
 		fprintf(fout,">> Debug mode ON\n");
 	}
 
-	signal(SIGALRM,timeout_handler);
+	/*signal(SIGALRM,timeout_handler);*/
+
+	init = 0;
 
 	/* reads successive lines from source; repeats at the end of each set of instruction */
 	while( fgets(line,MAX_LINE,fin) != NULL ) {

@@ -26,19 +26,24 @@
 								 * and if there were threads to kill while there were no clients at all, than   *
 								 * the thread would only be killed when the conditional mutex would kick off    *
 								 * (with a new client) thus killing a thread and launching one right afterwards */
-#define MAX_WORKERS 2			/* neither the maximum nor the minimum may be reached for every possible combination *
+#define MAX_WORKERS 100			/* neither the maximum nor the minimum may be reached for every possible combination *
 								 * depending on CLIENTS_PER_SLAVE ratio and hysteresis                               */
-#define MAX_CLIENTS 1			/* control is not synchronous with the other threads;                                      *
+#define MAX_CLIENTS 1000		/* control is not synchronous with the other threads;                                      *
 								 * it's a read only operation where we can ignore race conditions for performance increase */
-#define CLIENTS_PER_SLAVE ( MAX_CLIENTS / MAX_WORKERS )		/* average number of clients per worker; soft rule: see other settings   *
+#define CLIENTS_PER_SLAVE ( MAX_CLIENTS / MAX_WORKERS )		/* integer division !!!                                                  *
+                                                             * average number of clients per worker; soft rule: see other settings   *
 															 * not every combination is good:                                        *
 															 * there are combinations that 'resonate' for certain values of clients  *
-															 * e.g. if this ratio = 2, set hysteresis to 1 at least                  */
+															 * e.g. if this ratio = 2, set hysteresis to 1 at least                  *
+															 * while others just don't make any sense                                */
 #define POOL_REFRESH_RATE 1		/* [seconds] refresh rate for the pool size; use nanosleep() for finer control */
 #define POOL_HYSTERESIS 1		/* hysteresis while upgrading the pool; note that the refresh rate also introduces hysteresis, but in an unspecified amount *
 								 * represents a number of clients that may be added / removed without updating the pool                                     */
 #define DOORMAN_DOZE 5			/* [seconds] period of inactivity of master when MAX_CLIENTS is reached; wakes up to see if he can allow anyone else in */
 /************************************************/
+
+
+
 
 /* Global Variables; remember to initialize */
 
@@ -52,6 +57,13 @@ EXTERN sigset_t soft_kill_set;		/* mask for signals; common for every thread */
 EXTERN pthread_mutex_t p_mutex;		/* MUTEX to control access to protected resources */
 EXTERN pthread_cond_t  p_cond_var;	/* global condition variable for our program */
 
-/*  avoid warnings from missing sigthread.h */
+
+
+
+/* avoids warnings from missing sigthread.h */
+#ifndef _BITS_SIGTHREAD_H
+
 extern int pthread_kill (pthread_t __threadid, int __signo);
 extern int pthread_sigmask (int __how,__const __sigset_t *__restrict __newmask,__sigset_t *__restrict __oldmask);
+
+#endif

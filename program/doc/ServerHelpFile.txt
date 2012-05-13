@@ -88,6 +88,7 @@ Y A S C  --  ServerHelpFile   [Revision 1]
 
     ::       Normal output; includes minor internal errors.
 
+            'M' command has a specific printing layout already covered above.
 
 
 (SCROLL UP ^)

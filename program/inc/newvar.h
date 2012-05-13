@@ -24,7 +24,8 @@ typedef struct package {
 
 /* clients whose sessions is already opened */
 typedef struct client {
-	int fd; /* socket fd for a specific client */
+	int fd;		/* socket fd for a specific client */
+	char IP[INET_ADDRSTRLEN];	/* string with IP */
 	struct client *next;
 	struct client *previous;
 	struct stack_descriptor *stack_desc;

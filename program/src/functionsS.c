@@ -20,6 +20,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 
 
 #include <prototypesS.h>
@@ -62,7 +63,7 @@ void *parse_line () {
 		while( sscanf(remainingString,"%s%n",parameter,&caret) > 0 ) {
 			remainingString += caret;	/* moves along the line */
 			if( !strcmp(parameter,"M") ) {
-				/* print info                      *****************          TO DO           ****************/
+				print_client_info();
 
 			} else if( !strcmp(parameter,"HELP") ) {
 				FILE *helpFile;
@@ -95,9 +96,72 @@ void *parse_line () {
 }
 
 
+void print_client_info () {
+	int i, j, caret, TAB=20, END_TAB=80;	/* TABS have to be synchronized with the header */
+	CLIENT *client;
+	STACK_ELEMENT *aux;
+
+	pthread_mutex_lock(&p_mutex);	/* nothing else changes the list BUT there may be asynchronous printing of some results *
+									 * due to the fact that handling clients is done with no lock                           *
+									 * try turning Verbose OFF for better, cleaner results                                  */
+
+	client = clients_desc.first;
+
+	fprintf(stdout,"\n _______________________________________________________________________________\n");
+	fprintf(stdout,  "|                                                                               |\n");
+	fprintf(stdout,  "| Clients connected                                                             |\n");
+	fprintf(stdout,  "|_______________________________________________________________________________|\n");
+	fprintf(stdout,  "| IP                [Stack]                                                     |\n");
+	fprintf(stdout,  "|                                                                               |\n");
+
+	for(i=0; i < clients_desc.count; i++) {		/* for each client */
+
+		caret = fprintf(stdout,"| %s",client->IP);
+
+		while( caret < TAB ) {
+			caret += fprintf(stdout," ");
+		}
+
+
+		if( client->stack_desc->count > 0 ) {
+			caret += fprintf(stdout,"[");
+			aux = client->stack_desc->first;
+			caret += fprintf(stdout,"%d",aux->operand);	/* 1st element doesn't have a comma */
+			aux = aux->next;
+
+			for( j=1; j < client->stack_desc->count; j++ ) {
+				if( caret < END_TAB - 20 ) {
+					caret += fprintf(stdout,",%d",aux->operand);
+				} else {
+					caret += fprintf(stdout,",...");
+					break;
+				}
+				aux = aux->next;
+			}
+			caret += fprintf(stdout,"]");
+		}
+
+		while( caret < END_TAB ) {
+			caret += fprintf(stdout," ");
+		}
+		fprintf(stdout,"|\n");
+
+
+		client=client->next;
+	}
+
+	fprintf(stdout,  "|_______________________________________________________________________________|\n");
+
+	pthread_mutex_unlock(&p_mutex);	/* the RC is not this big, but it helps giving a cleaner output */
+}
+
+
 void *manage_pool () {
 	int number_of_workers=0;
 	pthread_t slaves[MAX_WORKERS];	/* avoids dynamic allocation by having always the maximum size */
+
+	/* blocks signal so that it doesn't interrupt while attending to a client */
+	PTH_SIGMSK(SIG_BLOCK,soft_kill_set);
 
 
 	while( number_of_workers < MIN_WORKERS ) {
@@ -148,12 +212,15 @@ CLIENT get_client () {
 }
 
 
-void add_client ( int FD ) {
+void add_client ( int FD, char *IP ) {
 	CLIENT *newclient;
 	STACK_DESCRIPTOR *stack_desc;
+
 	MALL(newclient,1);
 	newclient->fd = FD;
+	strcpy(newclient->IP,IP);
 	newclient->next = NULL;
+
 	/*Create a stack descriptor for this client*/
 	MALL(stack_desc,1);
 	stack_desc->first = NULL;
@@ -231,10 +298,6 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 void* slaveWork() {
 	CLIENT client;
 	sigset_t pending_signals;
-
-	/* blocks signal so that it doesn't interrupt while attending to a client */
-	PTH_SIGMSK(SIG_BLOCK,soft_kill_set);
-
 
 	pthread_mutex_lock(&p_mutex);
 	while(1) {
@@ -325,6 +388,7 @@ void handle_client ( CLIENT client ) {
 					outPackage = mountResponsePackage('V', client.stack_desc->count, outPackage);
 					break;
 			case 'I':
+					resetStack(client.stack_desc);
 					outPackage = mountResponsePackage('V',OK,outPackage);
 					break;
 			case 'K':

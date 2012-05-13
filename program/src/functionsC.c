@@ -75,7 +75,7 @@ void parse_line (char *string){
 
 		} else if( !strcmp(parameter,"K") ) {
 			end_session(0);	/* ends connection with server; 0 enables extra output that is relevant here */
-			alarm(0);	/* no sense in waiting for idle after 'K' */
+			/*alarm(0);*/	/* no sense in waiting for idle after 'K' */
 
 		} else if( parameter[0] == ';' ) {	/* end of effective commands (anything past that is interpreted as comments until next NL) */
 			break;
@@ -130,20 +130,19 @@ void handleRequest ( char Req, int Data ) {
 	write(clientSocket,(void *)&outPackage,COM_SIZE);
 	if( (errno == EPIPE) || (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ECONNRESET) ){
 		close(clientSocket);
+		init = 0;
 		fprintf(fout, ":: Error!\n:: No server connection.\n:: Try 'I'.\n");
 	} else {
 		errno = 0;
 		read(clientSocket,(void *)&inPackage,COM_SIZE);
 		if( (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ENOTCONN) || (errno == ECONNRESET) ){
 			close(clientSocket);
+			init = 0;
 			fprintf(fout, ":: Error!\n:: No server connection.\n:: Try 'I'.\n");
-		} else if( errno == ETIMEDOUT ){
 
-			close(clientSocket);
-			fprintf(fout, ":: Error!\n:: Timed out.\n:: Try again.\n");
 		} else {
 			sscanf(inPackage.num,"%X", (unsigned int *) returningData);	/* converts string (hexadecimal integer) to normal integer */
-			alarm(TIME_OUT);
+			/*alarm(TIME_OUT);*/
 			if( DBG & 1 ) {
 				/*if( Req == 'D' ) {
 					fprintf(fout, "DEBUG:\t%c%d=> : =>%c\n", Req, Data, inPackage.msg);
@@ -170,13 +169,50 @@ void init_session () {
 	int gai_result;
 	PACKAGE outPackage, inPackage;
 
+	outPackage.msg = 'I';
+	sprintf(outPackage.num,"%X",0);	/* padding */
+
+	if( init != 0 ) {	/* is there an onpen session? */
+
+		errno = 0;
+		write(clientSocket,(void *)&outPackage,COM_SIZE);
+		if( (errno == EPIPE) || (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ECONNRESET) ){
+			close(clientSocket);
+			fprintf(fout, ":: Error!\n:: No server connection.\n:: Try again.\n");
+		} else {
+			read(clientSocket,(void *)&inPackage,COM_SIZE);
+			if( (errno == EAGAIN) || (errno == EWOULDBLOCK) || (errno == ENOTCONN) || (errno == ECONNRESET) ){
+				close(clientSocket);
+				init = 0;	/* or else it wouldn't ever try to connect */
+				fprintf(fout, ":: Error!\n:: No server connection.\n:: Try again.\n");
+			} else {
+				if( DBG & 1 ) {
+					fprintf(fout, "DEBUG:\tI=> : =>%c\n", inPackage.msg);
+
+				} /*else if( inPackage.msg == 'E' ) {*/								/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
+					/*fprintf(fout, ":: Error!\n:: Rejected connection.\n");*/		/* probably doesn't make sense to leave these else's here; dependes on server implementation */
+
+				/*} else if( inPackage.msg == 'I' ) {
+					fprintf(fout, ":: Server error!\n");
+				}
+
+				if( inPackage.msg == 'V' ) {*/
+				/*alarm(0);*/	/* only set if there is connection */
+				/*}*/
+			}
+
+			return;
+		}
+	}
+
+
 	if( (clientSocket = socket(AF_INET,SOCK_STREAM,0)) < 0 ) {
 		fprintf(stderr,">> Error!\n>> Failed to open socket.\n");
 		exit(-1);
 	}
 
 	memset(&hints,0, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;	/* IPV4 or IPV6 */
+	hints.ai_family = AF_INET;	/* IPV4 */
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_CANONNAME;
 
@@ -192,15 +228,13 @@ void init_session () {
 			break;
 
 		} else if(pntAddr->ai_next==NULL){
-			fprintf(fout,":: Error!\n:: Failed to establish connection\n");
+			fprintf(fout,":: Error!\n:: Failed to establish connection.\n:: Try again.\n");
+			return;
 		}
 
 	}
 
 	signal(SIGPIPE,SIG_IGN);
-
-	outPackage.msg = 'I';
-	sprintf(outPackage.num,"%X",0);	/* padding */
 
 	errno = 0;
 	write(clientSocket,(void *)&outPackage,COM_SIZE);
@@ -224,7 +258,8 @@ void init_session () {
 			}
 
 			if( inPackage.msg == 'V' ) {*/
-			alarm(TIME_OUT);	/* only set if there is connection */
+			init = 1;
+			/*alarm(TIME_OUT);*/	/* only set if there is connection */
 			/*}*/
 		}
 	}
@@ -250,9 +285,11 @@ void end_session ( int mode ) {
 	}
 
 	close(clientSocket);
+
+	init = 0;	/* session closed */
 }
 
-
+/*
 void timeout_handler () {
 
 	signal(SIGALRM, SIG_IGN);
@@ -260,3 +297,4 @@ void timeout_handler () {
 	fprintf(fout,TIME_OUT_MSG);
 	signal(SIGALRM,timeout_handler);
 }
+*/

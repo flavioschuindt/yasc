@@ -67,6 +67,14 @@
 	} \
 }
 
+/* SIGPROCMASK */
+#define SIGMSK(mode,set) { \
+	if ( (sigprocmask(mode, &(set), NULL)) != 0 ) { \
+		fprintf(stderr,">> ERROR: could not block signal set.\n>> Aborting.\n"); \
+		exit(-1); \
+	} \
+}
+
 /* THREAD SIGNAL */
 #define PTH_KILL(thrd,sig) { \
 	if ( (pthread_kill(&slaves[number_of_workers], sig)) != 0 ) { \

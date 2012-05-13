@@ -21,7 +21,7 @@
 
 /* CLIENT settings *****************************/
 
-#define TIME_OUT 300	/* [seconds] idle time necessary to close session automatically */
+#define TIME_OUT 5	/* [seconds] idle time necessary to close session automatically */
 #define TIME_OUT_MSG ":: Idle for 5 minute.\n:: Closed session.\n"
 
 /***********************************************/
@@ -30,8 +30,10 @@
 /* Global Variables; remember to initialize */
 
 EXTERN int DBG;				/* Flag for Debug mode; 'ON' for DBG odd, 'OFF' for DBG even */
-EXTERN FILE *fout;			/* Output file descriptor */
+EXTERN int init;			/* flag for session state: 0 -> no session; 1 -> there is a session already */
 EXTERN int clientSocket;	/* File descriptor for the client socket */
+EXTERN char *name, *port;
+EXTERN FILE *fout;			/* Output file descriptor */
 EXTERN struct addrinfo *server, *pntAddr;
 EXTERN struct addrinfo hints;
-EXTERN char *name, *port;
+

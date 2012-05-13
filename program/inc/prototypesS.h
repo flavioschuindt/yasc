@@ -30,22 +30,26 @@ void master_switch ();
 void *parse_line ();
 
 
+/*  prints info for each client               */
+void print_client_info ();
+
+
 /*  manages number of slaves dynamically      *
  *  Parameters:  nothing                      *
  *  Returns:     nothing                      */
 void *manage_pool ();
 
 
-/*Get and Update the first client to be served in the list of FDs*/
+/* Get and Update the first client to be served in the list of clients */
 CLIENT get_client ();
 
 
-/*Add a node(client) in the FDs List*/
-void add_client ( int FDToBeAdded );
+/* Add a node(client) in the clients List */
+void add_client ( int FD, char *IP );
 
 
-/*Remove a node (client) from the FDs List*/
-void remove_client ( int FDToBeSearched );
+/*Remove a node (client) from the clients List*/
+void remove_client ( int client_fd );
 
 
 /*  creates a stack associated with a particular socket (i.e. client) *
@@ -64,7 +68,7 @@ void *slaveWork();
 void handle_client ( CLIENT client );
 
 
-/* Commands handler module functions*/
+/* Commands handler module functions; commands not listed are handled directly */
 PACKAGE mountResponsePackage(char status, int response, PACKAGE outPackage);
 PACKAGE cmd_D(int operand[1], STACK_DESCRIPTOR *stack_desc, PACKAGE outPackage);
 PACKAGE cmd_T(STACK_DESCRIPTOR *stack_desc, PACKAGE outPackage);

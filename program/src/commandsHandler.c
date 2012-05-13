@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <arpa/inet.h>
 
 #include <prototypesS.h>
 #include <globalHeader.h>

@@ -7,7 +7,7 @@
  *  Flávio Schuindt     nº74570     MEEC                     *
  *  _______________________________________________________  *
  *                                                           *
- *  YASC Server  v0.1                                        *
+ *  YASC Server  v0.5                                        *
  *     expected arguments                                    *
  *      <port>            specify listening port             *
  *                                                           *
@@ -27,6 +27,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <fcntl.h>
 #include <signal.h>
 
@@ -104,35 +105,44 @@ int main( int argc, char *argv[] ) {
 
 
 	/* only for this thread */
-	signal(SIGINT,master_switch);	/* currently it only allows for a fancier exit */
+	signal(SIGINT,master_switch);	/* currently it only allows for a fancier exit with ctrl+c */
 
 
 	/* listens for incoming connections; and accepts them */
 	listen(primarySocket,SOMAXCONN);
 
-	while(1) {
 
-		/* as we don't lock the mutex here, MAX_CLIENTS is not an actual maximum, it has some hysteresis !!! needs to be tested *
-		 * scratch that: actually it is, because here is the only place we call add_client()                                    *
-		 * most that can happen is being temporarily blocked before reaching the maximum                                        */
-		if( clients_desc.count < MAX_CLIENTS ) {
-			clientAddr_len = sizeof(clientAddr);
-			/* secondarySocket is only a temporary holder of the file descriptor */
-			secondarySocket = accept(primarySocket,(struct sockaddr *) &clientAddr,(socklen_t*)&clientAddr_len);
+	{
+		char IP[INET_ADDRSTRLEN];
 
-			/* allows asynchronous reading from socket */
-			fcntl(secondarySocket, F_SETFL, O_NONBLOCK);
+		while(1) {
 
-			add_client(secondarySocket);
+			/* as we don't lock the mutex here, MAX_CLIENTS is not an actual maximum, it has some hysteresis !!! needs to be tested *
+			 * scratch that: actually it is, because here is the only place we call add_client()                                    *
+			 * most that can happen is being temporarily blocked before reaching the maximum                                        */
+			if( clients_desc.count < MAX_CLIENTS ) {
+				clientAddr_len = sizeof(clientAddr);
+				/* secondarySocket and clientAddr are only temporary holders of the file descriptor and client address */
+				secondarySocket = accept(primarySocket,(struct sockaddr *) &clientAddr,(socklen_t*)&clientAddr_len);
 
-			if( VRB & 1 ) {
-				fprintf(stdout,":: +1 client.\n");
+				/* allows asynchronous reading from socket */
+				fcntl(secondarySocket, F_SETFL, O_NONBLOCK);
+
+				/* gets IP address in string format */
+				inet_ntop( AF_INET, &clientAddr.sin_addr.s_addr, IP, INET_ADDRSTRLEN );
+
+				add_client(secondarySocket,IP);
+
+
+				if( VRB & 1 ) {
+					fprintf(stdout,":: +1 client at address %s\n",IP);
+				}
+
+
+			} else {		/* enough clients for now */
+				sleep(DOORMAN_DOZE);	/* to delete in favour of a conditional mutex */
+				/*pause();*/
 			}
-
-
-		} else {		/* enough clients for now */
-			sleep(DOORMAN_DOZE);	/* to delete in favour of a conditional mutex */
-			/*pause();*/
 		}
 	}
 
