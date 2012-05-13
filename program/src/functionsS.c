@@ -208,6 +208,10 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 				client->next->previous = client->previous;
 			}
 			clients_desc.count--;
+			resetStack(client->stack_desc); /*Not necessary to create a new function to remove all the stack.
+											resetStack already frees all nodes in the list, so we only need
+											to free the descriptor of the stack.*/
+			free(client->stack_desc); /*Remove the descriptor of the stack*/
 			free(client); /* Remove the node */
 			break;
 		/* FD not found */

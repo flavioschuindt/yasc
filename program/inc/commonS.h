@@ -28,7 +28,7 @@
 								 * (with a new client) thus killing a thread and launching one right afterwards */
 #define MAX_WORKERS 2			/* neither the maximum nor the minimum may be reached for every possible combination *
 								 * depending on CLIENTS_PER_SLAVE ratio and hysteresis                               */
-#define MAX_CLIENTS 4			/* control is not synchronous with the other threads;                                      *
+#define MAX_CLIENTS 1			/* control is not synchronous with the other threads;                                      *
 								 * it's a read only operation where we can ignore race conditions for performance increase */
 #define CLIENTS_PER_SLAVE ( MAX_CLIENTS / MAX_WORKERS )		/* average number of clients per worker; soft rule: see other settings   *
 															 * not every combination is good:                                        *
@@ -52,7 +52,6 @@ EXTERN sigset_t soft_kill_set;		/* mask for signals; common for every thread */
 EXTERN pthread_mutex_t p_mutex;		/* MUTEX to control access to protected resources */
 EXTERN pthread_cond_t  p_cond_var;	/* global condition variable for our program */
 
-
-/* to avoid warnings from missing sigthread.h */
+/*  avoid warnings from missing sigthread.h */
 extern int pthread_kill (pthread_t __threadid, int __signo);
 extern int pthread_sigmask (int __how,__const __sigset_t *__restrict __newmask,__sigset_t *__restrict __oldmask);

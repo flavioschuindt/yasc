@@ -196,7 +196,6 @@ PACKAGE cmd_R (STACK_DESCRIPTOR *stack_desc, PACKAGE outPackage) {		/* stack is 
 		}
 	} else {
 		/* Stack is empty */
-		resetStack(stack_desc);
 		return mountResponsePackage('E',BAD_STACK,outPackage);
 	}
 }
