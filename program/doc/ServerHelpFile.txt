@@ -55,9 +55,9 @@ Y A S C  --  ServerHelpFile   [Revision 1]
 
       'T'                   Returns the top most value in the stack.
 
-      'R'                   Returns end result and cleans the stack.
+      'R'                   Returns end result and cleans the stack only if there is one value in the stack.
                             If the result is a partial one (i.e. there are still values in the stack), or if the stack is empty,
-                            the server shall return an error AND clean the stack. To see partial results use 'T'!
+                            the server shall return an error. To see partial results use 'T'!
                             In case of error, returns BIG_STACK or BAD_STACK.
 
       '+','-','*','/','%'   Integer basic operations. In case of error, returns OUT_OF_RANGE, and also DIV_0 for '/' and '%'.

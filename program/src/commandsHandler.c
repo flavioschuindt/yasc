@@ -192,7 +192,6 @@ PACKAGE cmd_R (STACK_DESCRIPTOR *stack_desc, PACKAGE outPackage) {		/* stack is 
 			return aux_pckg;
 		} else {
 			/* result is only partial; stack is bigger than expected */
-			resetStack(stack_desc);
 			return mountResponsePackage('E', BIG_STACK, outPackage);
 		}
 	} else {

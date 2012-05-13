@@ -53,7 +53,7 @@ Y A S C  --  ClientHelpFile   [Revision 2]
 
   'T'                   Asks server for the top most value in the stack.
 
-  'R'                   Asks server for end result; cleans the stack regardless of how many values are stored.
+  'R'                   Asks server for end result; cleans the stack only if there is one value in the stack.
                         If the result is a partial one (i.e. there are still values in the stack), or if the stack is empty,
                         the server shall return an error. To see partial results use 'T'.
                         In case of error, returns BIG_STACK or BAD_STACK.
