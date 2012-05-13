@@ -12,7 +12,7 @@
  *      <port>            specify listening port             *
  *                                                           *
  *     options                                               *
- *      -g                start in debug mode                *
+ *      -v                verbose mode                       *
  *                                                           *
  *************************************************************/
 
@@ -43,17 +43,15 @@ int main( int argc, char *argv[] ) {
 
 	int primarySocket, secondarySocket, clientAddr_len;
 	unsigned int port;
-/*	sigset_t set;*/
 	struct sockaddr_in serverAddr, clientAddr;
 	char *endptr;
-	pthread_t poolManager, serverManager;
 
 
 	/* >>> MASTER thread <<< */
 	createInitialServerConditions();
 
 	/* argument parsing; setup */
-	if( argc == 2 ) {
+	if( (argc > 1) && (argc < 4) ) {
 
 		errno = 0;		/* only way of checking over / underflow */
 		port = (unsigned int) strtol(argv[1],&endptr,0);
@@ -78,20 +76,23 @@ int main( int argc, char *argv[] ) {
 			exit(-1);
 		}
 
+
+		if( (argc == 3) && (strcmp(argv[2],"-v") == 0) ) {
+			VRB = 1;
+			fprintf(stdout,":: Verbose mode ON\n");
+		}
+
 	} else {
-		fprintf(stderr,">> Setup error!\n>> Too many arguments.\n>> Aborting.\n");
+		fprintf(stderr,">> Setup error!\n>> Bad arguments.\n>> Aborting.\n");
 		exit(-1);
 	}
 
 
 	/* every thread inherits this mask                     *
-	 * allowing to handle the signal and thus being killed */
+	 * allowing to handle the signal and thus being killed *
+	 * in the same way                                     */
 	SIG_EMPTYSET(soft_kill_set);
 	SIG_ADDSET(soft_kill_set,SIGINT);
-	/*PTH_SIGMSK(SIG_BLOCK,set);*/
-	/* every slave inherits this handler */
-	/*signal(SIGUSR1,thread_suicide);*/
-	/* to kill threads call 'pthread_kill(pthread_t *, SIGUSR1);' */
 
 
 /** Launch Services ************************************/
@@ -102,31 +103,38 @@ int main( int argc, char *argv[] ) {
 /*******************************************************/
 
 
+	/* only for this thread */
+	signal(SIGINT,master_switch);	/* currently it only allows for a fancier exit */
+
+
 	/* listens for incoming connections; and accepts them */
 	listen(primarySocket,SOMAXCONN);
 
 	while(1) {
 
-		if( clients_desc.count < MAX_CLIENTS ) {	/* as we don't lock the mutex here, MAX_CLIENTS is not an actual maximum, it has some hysteresis !!! needs to be tested */
+		/* as we don't lock the mutex here, MAX_CLIENTS is not an actual maximum, it has some hysteresis !!! needs to be tested *
+		 * scratch that: actually it is, because here is the only place we call add_client()                                    *
+		 * most that can happen is being temporarily blocked before reaching the maximum                                        */
+		if( clients_desc.count < MAX_CLIENTS ) {
 			clientAddr_len = sizeof(clientAddr);
 			/* secondarySocket is only a temporary holder of the file descriptor */
 			secondarySocket = accept(primarySocket,(struct sockaddr *) &clientAddr,(socklen_t*)&clientAddr_len);
 
-			/* allows assynchronous reading from socket */
+			/* allows asynchronous reading from socket */
 			fcntl(secondarySocket, F_SETFL, O_NONBLOCK);
 
 			add_client(secondarySocket);
 
+			if( VRB & 1 ) {
+				fprintf(stdout,":: +1 client.\n");
+			}
+
+
 		} else {		/* enough clients for now */
-			/*sleep(DOORMAN_DOZE);*/
+			sleep(DOORMAN_DOZE);	/* to delete in favour of a conditional mutex */
 			/*pause();*/
 		}
 	}
 
-
-	PTH_JOIN(serverManager,NULL);
-	PTH_JOIN(poolManager,NULL);
-
 	return 0;
-
 }

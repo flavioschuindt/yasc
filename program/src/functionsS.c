@@ -34,6 +34,7 @@
 
 void createInitialServerConditions () {
 	master_pthread_t = pthread_self();
+	VRB = 0;
 
 	pthread_mutex_init(&p_mutex, NULL);
 	pthread_cond_init(&p_cond_var,NULL);
@@ -45,8 +46,9 @@ void createInitialServerConditions () {
 }
 
 
-void thread_suicide () {
-	pthread_exit(NULL);
+void master_switch () {
+	fprintf(stdout,"\n:: Shutting down.\n\n\n");
+	exit(0);
 }
 
 
@@ -61,18 +63,34 @@ void *parse_line () {
 			remainingString += caret;	/* moves along the line */
 			if( !strcmp(parameter,"M") ) {
 				/* print info                      *****************          TO DO           ****************/
-			} else if( !strcmp(parameter,"help") ) {
-				fprintf(stdout,">> No soup for you!\n");
-				/* open help pages                          *************		    TO DO             *************/
+
+			} else if( !strcmp(parameter,"HELP") ) {
+				FILE *helpFile;
+				char file_line[MAX_LINE];
+				helpFile = fopen("./doc/ServerHelpFile.txt","r");
+				if( helpFile == NULL ) {
+					fprintf(stdout,":: Error!\n:: Can't open help file.\n:: Check your working directory.\n");
+				} else {
+					while( fgets(file_line,MAX_LINE,helpFile) != NULL ) {
+						fprintf(stdout,"%s",file_line);
+					}
+					fclose(helpFile);
+				}
+
+			} else if( !strcmp(parameter,"V") ) {
+				VRB++;		/* test is done with bitwise AND; true for DBG odd, false for even */
+				if( VRB & 1 ) {
+					fprintf(stdout,":: Verbose mode ON\n");
+				} else {
+					fprintf(stdout,":: Verbose mode OFF\n");
+				}
 			} else if( !strcmp(parameter,"F") ) {
-				fprintf(stdout,">> Shutting down.\n\n\n");		/*********   incomplete (?) -> detached threads    ****************/
-				pthread_exit(NULL);
+				master_switch();
 			} else {
-				fprintf(stdout,">> Parsing error!\n>> Unknown command \"%s\" ignored.\n>> Try help for assistance.\n",parameter);
+				fprintf(stdout,":: Parsing error!\n:: Unknown command \"%s\" ignored.\n:: Try HELP for assistance.\n",parameter);
 			}
 		}
 	}
-
 	pthread_exit(NULL);
 }
 
@@ -80,6 +98,7 @@ void *parse_line () {
 void *manage_pool () {
 	int number_of_workers=0;
 	pthread_t slaves[MAX_WORKERS];	/* avoids dynamic allocation by having always the maximum size */
+
 
 	while( number_of_workers < MIN_WORKERS ) {
 
@@ -95,16 +114,16 @@ void *manage_pool () {
 		/* increasing clients */
 		while( (clients_desc.count > ((CLIENTS_PER_SLAVE * number_of_workers) + POOL_HYSTERESIS)) && (number_of_workers < MAX_WORKERS) ) {
 			PTH_CREATE(&slaves[number_of_workers], slaveWork, NULL);
-			PTH_DTCH(slaves[number_of_workers]);
+			PTH_DTCH(slaves[number_of_workers]);	/* allows killing them with no join */
 			number_of_workers++;
-/* DEMO */
-				fprintf(stdout,"+1\n");
-				fflush(stdout);
-/* DEMO */
+
+			if( VRB & 1 ) {
+				fprintf(stdout,":: +1 slave.\n");
+			}
 		}
 
 		/* decreasing clients */
-		while( (clients_desc.count < ((CLIENTS_PER_SLAVE * number_of_workers) + POOL_HYSTERESIS))  && (number_of_workers > MIN_WORKERS) ) {
+		while( (clients_desc.count < ((CLIENTS_PER_SLAVE * number_of_workers) - POOL_HYSTERESIS))  && (number_of_workers > MIN_WORKERS) ) {
 			number_of_workers--;
 			pthread_kill(slaves[number_of_workers], SIGINT); /* starts killing the ones with greater index */
 		}
@@ -198,7 +217,10 @@ void remove_client ( int client_fd ) {			/* !!!!!!!!!!!!!!!! needs to be revised
 	}
 	pthread_mutex_unlock(&p_mutex);
 
-	/*pthread_kill(master_pthread_t, SIGCONT);*/	/* signals master to accept more clients */
+	if( VRB & 1 ) {
+		fprintf(stdout,":: -1 client.\n");
+	}
+	pthread_kill(master_pthread_t, SIGCONT);	/* signals master to accept more clients */
 }
 
 
@@ -219,12 +241,12 @@ void* slaveWork() {
 			/* Ok, now others threads can access the list and process other requests */
 
 			handle_client(client);
+
 			/* KILLING ZONE *******************************/
 			/* it has to be outside the RC !!! */
 			/* is it time to die already? ;( */
 			if( sigpending(&pending_signals) < 0 ) {
-				fprintf(stdout,">> ERROR!\n>> A slave failed to check pending signals.\n>> Killing the slave. Another one shall be issued if necessary.\n");
-				fflush(stdout);
+				fprintf(stdout,":: ERROR!\n:: A slave failed to check pending signals.\n:: Killing the slave. Another one shall be issued if necessary.\n");
 				break;
 			} else if( sigismember(&pending_signals, SIGINT) ) {
 				break;
@@ -242,10 +264,10 @@ void* slaveWork() {
 			need to take care of this*/
 		}
 	}
-/* DEMO */
-	fprintf(stdout,"Another one bites the dust.\n");
-	fflush(stdout);
-/* DEMO */
+
+	if( VRB & 1 ) {
+		fprintf(stdout,":: -1 slave.\n");
+	}
 	pthread_exit(NULL);
 }
 
@@ -265,8 +287,8 @@ void handle_client ( CLIENT client ) {
 		}
 
 /* DEMO */
-		sscanf(inPackage.num,"%X", (unsigned int *) num);
-		fprintf(stdout, "%c\t%d\n", inPackage.msg, *num);
+		/*sscanf(inPackage.num,"%X", (unsigned int *) num);
+		fprintf(stdout, "%c\t%d\n", inPackage.msg, *num);*/
 /* DEMO */
 
 		switch(inPackage.msg){

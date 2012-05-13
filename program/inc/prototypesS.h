@@ -21,8 +21,7 @@
 void createInitialServerConditions();
 
 
-/* Thread commits suicide when SIGUSR1 is caught */
-void thread_suicide ();
+void master_switch ();
 
 
 /*  parses command line; admin interface      *

@@ -25,18 +25,11 @@ Y A S C  --  ServerHelpFile   [Revision 1]
   'M'                   Prints information about every client logged on the server.
                         Format is: <IP address> [ stack element 1, stack element 2, ... ].
 
+  'V'                   Verbose mode.
+
   'HELP'                Opens *this* document on the standard output.
 
   'F'                   Exits the program without prompt.
-
-
-=== Output ===
-
-  There are three kinds of output:
-
-    >>       Internal errors that break functionality of the server. Program always exits after one of these.
-
-    ::       Normal output; includes minor internal errors. Only present if -v flag is set on runtime.
 
 
 === Services ===
@@ -69,7 +62,7 @@ Y A S C  --  ServerHelpFile   [Revision 1]
 
       '+','-','*','/','%'   Integer basic operations. In case of error, returns OUT_OF_RANGE, and also DIV_0 for '/' and '%'.
 
-      'D hex number'      Hexadecimal number is converted to integer and stored in the client's stack.
+      'D hex number'        Hexadecimal number is converted to integer and stored in the client's stack.
 
 
   Error codes:
@@ -85,6 +78,16 @@ Y A S C  --  ServerHelpFile   [Revision 1]
     The server shall return these codes, defined in globalHeader.h, alongside with a message 'I' in case of internal error:
 
     [none defined]
+
+
+=== Output ===
+
+  There are three kinds of output:
+
+    >>       Internal errors that break functionality of the server. Program always exits after one of these.
+
+    ::       Normal output; includes minor internal errors.
+
 
 
 (SCROLL UP ^)

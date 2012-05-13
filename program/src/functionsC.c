@@ -181,7 +181,7 @@ void init_session () {
 	hints.ai_flags = AI_CANONNAME;
 
 	if( (gai_result = getaddrinfo(name, port,&hints,&server)) != 0 ) {
-		fprintf(stderr,">> Error!\n>> %s\n", gai_strerror(gai_result));
+		fprintf(stderr,">> Error!\n>> %s.\n", gai_strerror(gai_result));
 		exit(-1);
 	}
 

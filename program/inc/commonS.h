@@ -19,31 +19,38 @@
 #endif
 
 
-/* Global defines & macros **********************/
+/* SERVER settings *****************************/
+/* !!! read before you change, or don't dare to say I got it wrong !!! */
 
-/* SERVER settings */
 #define MIN_WORKERS 1			/* can be set to 0 BUT has a side effect: slaveWork() is almost always  blocked *
 								 * and if there were threads to kill while there were no clients at all, than   *
 								 * the thread would only be killed when the conditional mutex would kick off    *
 								 * (with a new client) thus killing a thread and launching one right afterwards */
-#define MAX_WORKERS 10
-#define MAX_CLIENTS 10			/* soft limit (needs to be tested) due to lack of synchronization there may be a few more */
-#define POOL_REFRESH_RATE 1		/* [seconds] refresh rate for the pool size */
-#define POOL_HYSTERESIS 0		/* hysteresis while upgrading the pool; note that the refresh rate also introduces hysteresis, but in an unspecified amount *
+#define MAX_WORKERS 2			/* neither the maximum nor the minimum may be reached for every possible combination *
+								 * depending on CLIENTS_PER_SLAVE ratio and hysteresis                               */
+#define MAX_CLIENTS 4			/* control is not synchronous with the other threads;                                      *
+								 * it's a read only operation where we can ignore race conditions for performance increase */
+#define CLIENTS_PER_SLAVE ( MAX_CLIENTS / MAX_WORKERS )		/* average number of clients per worker; soft rule: see other settings   *
+															 * not every combination is good:                                        *
+															 * there are combinations that 'resonate' for certain values of clients  *
+															 * e.g. if this ratio = 2, set hysteresis to 1 at least                  */
+#define POOL_REFRESH_RATE 1		/* [seconds] refresh rate for the pool size; use nanosleep() for finer control */
+#define POOL_HYSTERESIS 1		/* hysteresis while upgrading the pool; note that the refresh rate also introduces hysteresis, but in an unspecified amount *
 								 * represents a number of clients that may be added / removed without updating the pool                                     */
-#define CLIENTS_PER_SLAVE ( MAX_CLIENTS / MAX_WORKERS )		/* average number of clients per worker; soft rule: see other settings */
 #define DOORMAN_DOZE 5			/* [seconds] period of inactivity of master when MAX_CLIENTS is reached; wakes up to see if he can allow anyone else in */
-
+/************************************************/
 
 /* Global Variables; remember to initialize */
+
+EXTERN int VRB;						/* verbose flag */
+EXTERN pthread_t poolManager, serverManager, master_pthread_t;	/* important threads IDs */
 
 EXTERN CLIENTS_DESCRIPTOR clients_desc;
 
 EXTERN sigset_t soft_kill_set;		/* mask for signals; common for every thread */
 
-EXTERN pthread_t master_pthread_t;	/* master ID */
-EXTERN pthread_mutex_t p_mutex;	/* MUTEX to control access to protected resources */
-EXTERN pthread_cond_t  p_cond_var; /* global condition variable for our program */
+EXTERN pthread_mutex_t p_mutex;		/* MUTEX to control access to protected resources */
+EXTERN pthread_cond_t  p_cond_var;	/* global condition variable for our program */
 
 
 /* to avoid warnings from missing sigthread.h */

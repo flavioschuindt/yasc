@@ -76,7 +76,7 @@ functionsC.o: functionsC.c prototypesC.h commonC.h globalHeader.h newvar.h
 # Quick Run
 runS:
 	clear
-	./bin/yascS.exe 50000
+	./bin/yascS.exe 50000 -v
 
 runC:
 	clear
