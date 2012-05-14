@@ -15,18 +15,18 @@
 		-f <filename.txt>
 	\end{verbatim}
 
-	Ainda no processo de chamada o utilizador pode configurar duas flags adicionais: \verb|-l| e \verb|-g|.
+	Ainda no processo de chamada o utilizador pode configurar duas \emph{flags} adicionais: \verb|-l| e \verb|-g|.
 	
-	A primeira destina-se a suprimir o output da linha de comandos e registá-lo na totalidade num ficheiro \verb|log.txt|, excepto erros críticos que continuam a ser dirigidos para o terminal.
-	Esta flag não pode ser alterada em qualquer outro ponto da execução do cliente e destina-se apenas a permitir uma melhor análise do output do programa, sobretudo em situações em que um ficheiro de comandos é usado.
+	A primeira destina-se a suprimir o \emph{output} da linha de comandos e registá-lo na totalidade num ficheiro \verb|log.txt|, excepto erros críticos que continuam a ser dirigidos para o terminal.
+	Esta \emph{flag} não pode ser alterada em qualquer outro ponto da execução do cliente e destina-se apenas a permitir uma melhor análise do \emph{output} do programa, sobretudo em situações em que um ficheiro de comandos é usado.
 	
-	A segunda flag permite apenas que o modo \emph{Debug} seja iniciado no arranque, mas o utilizador pode em qualquer momento alternar entre os dois modos de output.
+	A segunda \emph{flag} permite apenas que o modo \emph{Debug} seja iniciado no arranque, mas o utilizador pode em qualquer momento alternar entre os dois modos de \emph{output}.
 	
 	Com a excepção do endereço do servidor e da porta de escuta, nenhum destes parâmetros é obrigatório nem tem ordem fixa.
 	
 	A execução do cliente num directório que não contenha \verb|/doc| não permite o acesso ao ficheiro de ajuda durante a execução.
 
-
+\clearpage
 \subsection{Interface\label{sec:cliente_interface}}
 
 	\indent\indent A interface com o cliente é feita à custa dos comandos:
@@ -38,11 +38,11 @@
 			\item{I}
 			\item{K}
 		\end{itemize}
-		\item{Operações em stack:}\begin{itemize}
+		\item{Operações em \emph{stack}:}\begin{itemize}
 			\setlength{\parskip}{-3pt}
 			\item{$+$, $-$, $*$, $/$, $\%$}
 		\end{itemize}
-		\item{Controlo de stack:}\begin{itemize}
+		\item{Controlo de \emph{stack}:}\begin{itemize}
 			\setlength{\parskip}{-3pt}
 			\item{P}
 			\item{T}
@@ -58,27 +58,27 @@
 
 	Os comandos \verb|I| e \verb|K| permitem iniciar e terminar, respectivamente, a ligação ao servidor.
 	Esta operação pode ser feita em qualquer ponto ponto da execução do cliente, e depois de terminada a sessão o cliente pode voltar a iniciá-la sob a penalidade de ficar bloqueado na fila do \verb|listen()|.
-	No caso de uma sessão ter sido previamente iniciada, \verb|I| deverá limpar o stack com retorno positivo \verb|V0|.
+	No caso de uma sessão ter sido previamente iniciada, \verb|I| deverá limpar o \emph{stack} com retorno positivo \verb|V0|.
 	
 	As operações aritméticas, todas elas efectuadas sobre números inteiros de $32$ bits, retornam sempre \verb|V0| excepto em caso de overflow, underflow ou divisão por $0$.
 
-	Para visualizar e controlar o stack, tem-se ainda os comandos \verb|P|, \verb|T| e \verb|R|.
-	Estes permitem saber o tamanho do stack, resultados parciais ou números acabados de introduzir e resultados totais, respectivamente.
+	Para visualizar e controlar o \emph{stack}, tem-se ainda os comandos \verb|P|, \verb|T| e \verb|R|.
+	Estes permitem saber o tamanho do \emph{stack}, resultados parciais ou números acabados de introduzir e resultados totais, respectivamente.
 	O modo mais simples de reinicializá-lo é, como foi dito, com o comando \verb|I|.
 	
-	A introdução de valores no stack é feita simplesmente introduzindo números inteiros em base decimal ou, em alternativa, em base octal na forma \emph{0\#\#\#} ou na base hexadecimal na forma \emph{0x\#\#\#}.
+	A introdução de valores no \emph{stack} é feita simplesmente introduzindo números inteiros em base decimal ou, em alternativa, em base octal na forma \emph{0\#\#\#} ou na base hexadecimal na forma \emph{0x\#\#\#}.
 	
 	Por fim, os restantes comandos destinam-se a ligar e desligar o modo \emph{Debug}, a abrir um ficheiro na própria linha de comandos, e a fechar o cliente.
 	Para a leitura do ficheiro de ajuda, tem ainda de ser tido em conta o directório de execução, conforme explicado na secção \ref{sec:cliente_chamada}, e vale referir que \verb|EXIT| chama internamente \verb|K| por forma a avisar o servidor de que fechou sessão.
 	
-%\clearpage	%!!!! não estar aqui leva a próxima linha fique fora de contexto -> verificar outra vez caso o texto mude
-	O output gerado é sempre precedido de sinalética própria do tipo de mensagem em questão:
+
+	O \emph{output} gerado é sempre precedido de sinalética própria do tipo de mensagem em questão:
 	
 	\begin{tabbing}			% [padding] \= [padding] sets a tab and \kill ignores the line when printing; \> indents to it; \\ changes line
 		$\diamond$ \verb|DEBUG:|xx \= \kill
 		$\diamond$ \verb|>>| \> Erro que quebra funcionalidade do cliente.\\
-		$\diamond$ \verb|: :| \> Output normal que inclui algumas mensagens de erro.\\
-		$\diamond$ \verb|DEBUG:| \> Output extra do modo \emph{Debug}.
+		$\diamond$ \verb|: :| \> \emph{Output} normal que inclui algumas mensagens de erro.\\
+		$\diamond$ \verb|DEBUG:| \> \emph{Output} extra do modo \emph{Debug}.
 	\end{tabbing}
 
 	Num erro crítico o cliente aborta com a mensagem de erro, mas em qualquer outro caso o cliente deverá apenas informar do erro e continuar a executar.
@@ -87,7 +87,7 @@
 	Para maior detalhe relativo à interface com o utilizador, pode ser consultado o manual do cliente.
 	
 	
-
+\clearpage
 \subsection{Estrutura lógica\label{sec:cliente_estrutura}}
 
 	\indent\indent O cliente é constituído por um único fio de execução durante todo o seu tempo de execução.
@@ -101,16 +101,17 @@
 	}
 	\end{lstlisting}
 	
-	Neste ciclo o programa limita-se a analisar o input e a tratá-lo de forma serializada por ordem de introdução.
+	Neste ciclo, que resume bem o programa, o cliente limita-se a analisar o \emph{input} e a tratá-lo de forma serializada por ordem de introdução.
 	Tal inclui a apresentação de mensagens relevantes que obtenha do servidor.
 	
-	Este tratamento em série do input leva a que numa situação de bloqueio à espera do servidor se reflicta num cliente inutilizado.
+	Este tratamento em série do \emph{input} leva a que numa situação de bloqueio à espera do servidor se reflicta num cliente inutilizado.
 		
 
+\clearpage
 \subsection{Meios de comunicação\label{sec:cliente_comunicacao}}
 
 	\indent\indent O cliente faz uso de um único socket para comunicação com outro processo, potencialmente remoto: o servidor.
-	Usa o protocolo IPv4 por facilidade de teste na máquina de desenvolvimento, e todas as operações executadas sobre esse socket são síncronas.
+	Usa o protocolo TCP/IPv4 por facilidade de teste na máquina de desenvolvimento, e todas as operações executadas sobre esse socket são síncronas.
 	
 	Esta abordagem facilita a interface com o utilizador, sendo mais fácil gerir qual a resposta de cada comando individual.
 	Uma abordagem assíncrona exigiria um buffer de mensagens trocadas entre cliente e utilizador e um maior esforço na sua apresentação.
@@ -118,11 +119,14 @@
 	Por outro lado, a notação polonesa inversa sobressai sobretudo pela sua fácil interpretação síncrona, pelo que esta implementação adequa-se bem aos requisitos do projecto.
 	
 	
-	
-	
-
+\clearpage
 \subsection{Desenvolvimento futuro\label{sec:cliente_desenvolvimento}}
 
+	\indent\indent O cliente neste porjecto é uma entidade relativamente simples, por definição, mas um conjunto de melhorias podia ser posto em prática para omelhorar.
+	
+	A melhoria mais óbvia seria implementar assincronismo no envio de mensagens e tratamento de respostas, o que levaria a um problema bastante mais complicado tanto do lado do cliente, como mesmo do servidor.
+	
+	Este assincronismo nunca esteve nos planos para este projecto, mas era um ponto de relevo se quiséssemos expandir o leque de possibilidades para a interface com o servidor.
 
 
 \clearpage
