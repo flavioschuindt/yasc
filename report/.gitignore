@@ -1,0 +1,10 @@
+*.tcp
+*.tps
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex
+*.toc
+/Bib/*.bak

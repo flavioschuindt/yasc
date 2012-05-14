@@ -24,7 +24,8 @@
 	\mbox{}					% ensures a blank page
 	\clearpage				%
 }
-
+\renewcommand{\labelitemi}{$\diamond$}
+\renewcommand{\labelitemii}{$\cdot$}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -65,6 +66,8 @@
 	\fancyfoot[C]{\thepage}
 
 \input{Intro.tex}
+\blankpage
+
 \input{Cliente.tex}
 \input{Servidor.tex}
 

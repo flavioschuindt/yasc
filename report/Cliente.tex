@@ -1,4 +1,128 @@
 \section{Cliente\label{sec:Cliente}}
 
+\subsection{Chamada\label{sec:cliente_chamada}}
+
+	\indent\indent A invocação do cliente segue os requisitos do enunciado, bastando indicar o endereço do servidor e a porta de escuta.
+	A falha em passar dois argumentos corresponde a uma falha directa, mas a correcção destes parâmetros não é feita senão mais tarde quando e se o utilizador decidir iniciar sessão.
+	\begin{verbatim}
+		yascC.exe <hostname> <port>
+	\end{verbatim}
+	
+	Opcionalmente o utilizador poderá ainda fornecer um ficheiro de texto com comandos a executar cuja sintaxe deverá ser idêntica à usada na linha de comandos.
+	Para esse efeito deverá ser dado o directório do programa como parâmetro extra, precedido de \verb|-f|.
+	A verificação da extensão de ficheiro de texto não é verificada, pelo que o ficheiro usado não tem de ser necessariamente \verb|.txt|.
+	\begin{verbatim}
+		-f <filename.txt>
+	\end{verbatim}
+
+	Ainda no processo de chamada o utilizador pode configurar duas flags adicionais: \verb|-l| e \verb|-g|.
+	
+	A primeira destina-se a suprimir o output da linha de comandos e registá-lo na totalidade num ficheiro \verb|log.txt|, excepto erros críticos que continuam a ser dirigidos para o terminal.
+	Esta flag não pode ser alterada em qualquer outro ponto da execução do cliente e destina-se apenas a permitir uma melhor análise do output do programa, sobretudo em situações em que um ficheiro de comandos é usado.
+	
+	A segunda flag permite apenas que o modo \emph{Debug} seja iniciado no arranque, mas o utilizador pode em qualquer momento alternar entre os dois modos de output.
+	
+	Com a excepção do endereço do servidor e da porta de escuta, nenhum destes parâmetros é obrigatório nem tem ordem fixa.
+	
+	A execução do cliente num directório que não contenha \verb|/doc| não permite o acesso ao ficheiro de ajuda durante a execução.
+
+
+\subsection{Interface\label{sec:cliente_interface}}
+
+	\indent\indent A interface com o cliente é feita à custa dos comandos:
+
+	\begin{itemize}
+		\setlength{\parskip}{-3pt}
+		\item{Controlo de sessão:}\begin{itemize}
+			\setlength{\parskip}{-3pt}
+			\item{I}
+			\item{K}
+		\end{itemize}
+		\item{Operações em stack:}\begin{itemize}
+			\setlength{\parskip}{-3pt}
+			\item{$+$, $-$, $*$, $/$, $\%$}
+		\end{itemize}
+		\item{Controlo de stack:}\begin{itemize}
+			\setlength{\parskip}{-3pt}
+			\item{P}
+			\item{T}
+			\item{R}
+		\end{itemize}
+		\item{Outros:}\begin{itemize}
+			\setlength{\parskip}{-3pt}
+			\item{G}
+			\item{HELP}
+			\item{EXIT}
+		\end{itemize}
+	\end{itemize}
+
+	Os comandos \verb|I| e \verb|K| permitem iniciar e terminar, respectivamente, a ligação ao servidor.
+	Esta operação pode ser feita em qualquer ponto ponto da execução do cliente, e depois de terminada a sessão o cliente pode voltar a iniciá-la sob a penalidade de ficar bloqueado na fila do \verb|listen()|.
+	No caso de uma sessão ter sido previamente iniciada, \verb|I| deverá limpar o stack com retorno positivo \verb|V0|.
+	
+	As operações aritméticas, todas elas efectuadas sobre números inteiros de $32$ bits, retornam sempre \verb|V0| excepto em caso de overflow, underflow ou divisão por $0$.
+
+	Para visualizar e controlar o stack, tem-se ainda os comandos \verb|P|, \verb|T| e \verb|R|.
+	Estes permitem saber o tamanho do stack, resultados parciais ou números acabados de introduzir e resultados totais, respectivamente.
+	O modo mais simples de reinicializá-lo é, como foi dito, com o comando \verb|I|.
+	
+	A introdução de valores no stack é feita simplesmente introduzindo números inteiros em base decimal ou, em alternativa, em base octal na forma \emph{0\#\#\#} ou na base hexadecimal na forma \emph{0x\#\#\#}.
+	
+	Por fim, os restantes comandos destinam-se a ligar e desligar o modo \emph{Debug}, a abrir um ficheiro na própria linha de comandos, e a fechar o cliente.
+	Para a leitura do ficheiro de ajuda, tem ainda de ser tido em conta o directório de execução, conforme explicado na secção \ref{sec:cliente_chamada}, e vale referir que \verb|EXIT| chama internamente \verb|K| por forma a avisar o servidor de que fechou sessão.
+	
+%\clearpage	%!!!! não estar aqui leva a próxima linha fique fora de contexto -> verificar outra vez caso o texto mude
+	O output gerado é sempre precedido de sinalética própria do tipo de mensagem em questão:
+	
+	\begin{tabbing}			% [padding] \= [padding] sets a tab and \kill ignores the line when printing; \> indents to it; \\ changes line
+		$\diamond$ \verb|DEBUG:|xx \= \kill
+		$\diamond$ \verb|>>| \> Erro que quebra funcionalidade do cliente.\\
+		$\diamond$ \verb|: :| \> Output normal que inclui algumas mensagens de erro.\\
+		$\diamond$ \verb|DEBUG:| \> Output extra do modo \emph{Debug}.
+	\end{tabbing}
+
+	Num erro crítico o cliente aborta com a mensagem de erro, mas em qualquer outro caso o cliente deverá apenas informar do erro e continuar a executar.
+	
+	
+	Para maior detalhe relativo à interface com o utilizador, pode ser consultado o manual do cliente.
+	
+	
+
+\subsection{Estrutura lógica\label{sec:cliente_estrutura}}
+
+	\indent\indent O cliente é constituído por um único fio de execução durante todo o seu tempo de execução.
+	Permanece num ciclo quási infinito conforme é mostrado no trecho de código seguinte.
+	
+	De notar que no código abaixo, \verb|fin| identifica a linha de comandos ou o ficheiro de comandos passado ao programa.
+	
+	\begin{lstlisting}
+	while( fgets(line,MAX_LINE,fin) != NULL ) {
+		parse_line(line);
+	}
+	\end{lstlisting}
+	
+	Neste ciclo o programa limita-se a analisar o input e a tratá-lo de forma serializada por ordem de introdução.
+	Tal inclui a apresentação de mensagens relevantes que obtenha do servidor.
+	
+	Este tratamento em série do input leva a que numa situação de bloqueio à espera do servidor se reflicta num cliente inutilizado.
+		
+
+\subsection{Meios de comunicação\label{sec:cliente_comunicacao}}
+
+	\indent\indent O cliente faz uso de um único socket para comunicação com outro processo, potencialmente remoto: o servidor.
+	Usa o protocolo IPv4 por facilidade de teste na máquina de desenvolvimento, e todas as operações executadas sobre esse socket são síncronas.
+	
+	Esta abordagem facilita a interface com o utilizador, sendo mais fácil gerir qual a resposta de cada comando individual.
+	Uma abordagem assíncrona exigiria um buffer de mensagens trocadas entre cliente e utilizador e um maior esforço na sua apresentação.
+	
+	Por outro lado, a notação polonesa inversa sobressai sobretudo pela sua fácil interpretação síncrona, pelo que esta implementação adequa-se bem aos requisitos do projecto.
+	
+	
+	
+	
+
+\subsection{Desenvolvimento futuro\label{sec:cliente_desenvolvimento}}
+
+
 
 \clearpage
