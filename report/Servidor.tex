@@ -1,4 +1,228 @@
 \section{Servidor\label{sec:Servidor}}
 
 
+\subsection{Chamada\label{sec:servidor_chamada}}
+
+	\indent\indent A invocação do servidor segue estritamente os requisitos fornecidos pelo enunciado do projecto, bastando indicar como argumento a porta de escuta na qual o servidor deverá esperar clientes.
+
+	\begin{verbatim}
+		yascS.exe <port>
+	\end{verbatim}
+
+	O utilizador pode ainda escolher se deseja que o modo verboso seja activado no servidor passando a \emph{flag} \verb|-v| na invocação do mesmo.
+	O modo verboso permite que seja mostrado na saída padrão do servidor informações relativas à entrada e saída de clientes e ao lançamento de novos \emph{workers} no \emph{pool} de \emph{threads}.
+	A activação ou desactivação do modo verboso pode ser feita a qualquer momento pelo administrador do servidor, não sendo vinculativo o uso da \emph{flag}.
+
+	A execução do servidor num directório que não contenha \verb|/doc| não permite o acesso ao ficheiro de ajuda durante a execução.
+
+\clearpage
+\subsection{Interface\label{sec:servidor_interface}}
+
+	\indent\indent O servidor disponibiliza uma interface para o administrador do mesmo e esta é feita à custa de comandos:
+
+	\begin{itemize}
+		\setlength{\parskip}{-3pt}
+		\item{Gestão do servidor:}\begin{itemize}
+			\setlength{\parskip}{-3pt}
+			\item{M}
+		\end{itemize}
+		\item{Outros:}\begin{itemize}
+			\setlength{\parskip}{-3pt}
+			\item{V}
+			\item{HELP}
+			\item{F}
+		\end{itemize}
+	\end{itemize}
+
+	O comando \verb|M| é o único comando de gestão disponível.
+	Este permite "tirar uma foto" do instante actual do servidor, isto é, quais clientes estão conectados e como está a pilha de cada cliente individualmente.
+	O resultado é exibido na seguinte forma:
+
+	\begin{verbatim}
+		IP                [stack]
+		xxx.xxx.xxx.xxx   [stack top, ..., stack bottom]
+	\end{verbatim}
+
+	Em que o campo IP é um endereço IPv4, e os valores de \emph{stack} são inteiros de 32 bits com sinal compreendidos entre \verb|INT_MIN| e \verb|INT_MAX|, formatados em base decimal.
+
+	De notar que o comando \verb|M| é um comando dispendioso em termos de performance, como será visto na secção \ref{sec:servidor_estrutura}.
+	O seu uso constante bloqueia o tratamento dos clientes.
+
+	O comando V permite ligar ou desligar o modo verboso.
+	Correntemente, este modo permite ter melhor noção do que está a acontecer no servidor em tempo real, mas só no que diz respeito à entrada e saída de clientes, e ao lançamento de \emph{threads}.
+
+	Os comandos restantes destinam-se a abrir o manual do servidor e a fechar o servidor.
+	Tal como no caso do cliente, é necessário que o manual esteja ao alcance do programa conforme discutido na secção \ref{sec:servidor_chamada}.
+
+	Além das formas de \emph{output} já abordadas, o servidor no ecrã resultados de erros internos, que invariavelmente levam à terminação do programa.
+
+
+\clearpage
+\subsection{Estrutura lógica\label{sec:servidor_estrutura}}
+
+	\indent\indent O esqueleto do servidor é constituído por três unidades computacionais distintas que controlam todos os serviços prestados.
+	São elas o servidor Master, o \emph{Manager} e o \emph{pool} \emph{Manager}.
+
+	Vale referir que não lançamos novos processos, por serem mais pesados e não oferecerem nenhuma vantagem em relação às \emph{threads} no contexto do nosso projecto.
+	Isto é válido desde que, claro está, os problemas de sincronização sejam tidos em conta.
+
+	\emph{Threads}, por outro lado, lançamos muitas além das três referidas.
+	O \emph{pool} \emph{Manager} encarrega-se de criar ou matar \emph{threads} com o único propósito de atender aos clientes -- \emph{threads} chamadas de \emph{workers} ou \emph{slaves} a partir deste ponto.
+
+
+	A razão por detrás desta abordagem foi um conceito de design que definimos bem cedo: queríamos uma \emph{pool} de \emph{threads} em que cada \emph{worker} fosse capaz de atender a vários clientes.
+	Como os clientes nem sempre estão a executar comandos, não só não faz sentido ter unidades computacionais bloqueadas no \verb|read()|, como não precisamos de tantas \emph{threads}.
+	Daqui vem uma grande vantagem na nossa implementação que é o facto de que podermos ter muitos mais clientes do que \emph{threads}.
+
+	Contudo esta implementação sacrifica alguma simplicidade na sincronização dos vários fios de execução e, sobretudo, a conveniência de bloquear automaticamente na chamada ao \verb|read()|.
+
+	\setlength{\parskip}{20pt}		% distance between paragraphs
+
+	Definindo as funções de cada fio de execução, o \emph{Manager} tem a única função de atender aos comandos do administrador, partilhando algum do código da função de \emph{parsing} do cliente.
+	Executa maioritariamente de forma completamente paralela, excepto quando o administrador pede a listagem de clientes com sessão iniciada.
+	Aí, as condições de corrida são importantes e levou-nos ao uso de um \emph{mutex} para controlar o acesso a esses recursos.
+
+	\setlength{\parskip}{5pt}		% distance between paragraphs
+
+	Analisando o código, a região crítica na função \verb|print_client_info()| é na verdade um pouco inferior à região protegida com a tranca.
+	Tal deve-se a uma tentativa de minimizar as hipóteses de uma outra \emph{thread} interromper a listagem, permitindo uma melhor visualização da lista.
+	Dito isto, o comando \verb|M| destina-se a efeitos de debugging e administração, pelo que o seu peso deverá ser evitado em condições de funcionamento normal.
+
+	\setlength{\parskip}{20pt}		% distance between paragraphs
+
+	O módulo Master fica bloqueado grande parte do seu tempo de execução posterior ao setup do servidor.
+	Ao aceitar uma nova conexão de um cliente, o Master server invoca a função \verb|add_client()|, colocando-o na lista de clientes com sessão aberta.
+	É importante ressaltar que o número máximo de clientes a serem aceites está limitado estaticamente por \verb|MAX_CLIENTS|.
+	Se o número de clientes na lista atingir esse máximo, então o servidor mestre pára de aceitar novas conexões e fica em \emph{idle}, dormindo por um tempo definido em \verb|DOORMAN_DOZE|.
+
+	\setlength{\parskip}{5pt}		% distance between paragraphs
+
+	Em vez de bloquear de tempo a tempo, uma outra solução para o Master seria controlar com primitivas de sincronização o número de clientes activos e sinalizar o Master quando este valor descesse novamente abaixo do valor máximo estipulado.
+	Contudo, esta é uma situação de corrida que não nos convém corrigir.
+	O facto de que o Master pode rejeitar uns poucos clientes por alguns segundos porque se baseou numa contagem desactualizada é irrelevante num cenário de várias centenas senão milhares de utilizadores.
+	Assim o enquanto que o servidor ainda executa por vezes apenas para se bloquear novamente acaba por ser uma boa situação em relação a bloquear todas as \emph{threads} para ler um inteiro, e adicionar testes ao número de clientes dentro das \emph{workers} pois seriam estas quem teriam a capacidade de gerar o sinal.
+
+
+	\setlength{\parskip}{20pt}		% distance between paragraphs
+
+	Por fim, o \emph{pool} \emph{Manager} tem a função de capataz responsável por gerir o esforço computacional associado ao atendimento de um dado número de clientes.
+	Este dá origem a uma \emph{pool} de \emph{threads} que mantém de forma dinâmica.
+	O número exacto de \emph{threads} que são mantidas em execução é actualizado segundo uma taxa definida por \verb|pool_REFRESH_RATE| numa função directa do conjunto de valores:
+
+	\setlength{\parskip}{5pt}		% distance between paragraphs
+
+	\begin{itemize}
+		\setlength{\parskip}{-3pt}
+		\item{\verb|MIN_WORKERS|}
+		\item{\verb|MAX_WORKERS|}
+		\item{\verb|MAX_CLIENTS|}
+		\item{\verb|pool_HYSTERESIS|}
+		\item{\verb|CLIENTS_PER_SLAVE	/* divisão inteira */|}
+	\end{itemize}
+
+	Toda a aritmética envolvida no controlo da \emph{pool} é feita sobre inteiros, com resultados inteiros, oferecendo portanto alguma sensibilidade aos valores atribuídos a cada uma das constantes.
+	Esta opção é rápida e eficaz, mas obriga a algumas considerações.
+	Por análise cuidada do código é possível perceber que situações indesejáveis podem acontecer.
+
+	Nomeadamente, o número de \emph{slaves} nunca pode deve ser inferior a um, sob a penalidade de matar uma \emph{thread} para lançar outra de seguida.
+	Esta situação verifica-se por causa das trancas necessárias à correcta execução das \emph{threads} que impedem que estas sejam interrompidas em dados pontos da execução em benefício do cliente.
+
+	Outro exemplo é para uma relação inteira par de clientes por \emph{thread} (e.g. dois clientes por \emph{thread}) com uma histerese nula.
+	Nesta situação o \emph{Manager}, por evitar demasiados testes, vai entrar num modo de ressonância quando tem metade dos clientes máximos, lançando uma \emph{thread} e matando-a de seguida.
+
+	Os valores sugeridos para as constantes que condicionam a \emph{pool} foram atingidos por benchmarking, ainda que limitado a um computador único.
+	Certamente poderão ser ajustados para uma dada carga de trabalho por forma a optimizar os recursos da máquina que hospeda o servidor sendo portanto uma \emph{pool} bastante configurável.
+
+	\setlength{\parskip}{20pt}		% distance between paragraphs
+
+	Resumindo o atendimento a um cliente, inicialmente, o gerenciador do \emph{pool} lança um número mínimo de \emph{workers}, que poderia até ser nulo, com as implicações já discutidas.
+	A partir daí, cada \emph{worker} fica num loop infinito varrendo sequencialmente uma lista de clientes.
+	O facto de ser sequencialmente evita simplesmente que um cliente seja deixado por atender, mas não sendo aqui tão eficiente como esquemas em que uma \emph{thread} fica bloqueada num cliente.
+	Isto porque um cliente só por existir vai atrasar o processamento dos outros, mesmo quando não envia nenhum comando.
+	
+	\setlength{\parskip}{5pt}		% distance between paragraphs
+
+	Para percorrer os vários clientes, as \emph{threads} têm de se sincronizar por uma lista global, obrigando a um acesso em exclusividade, utilizando duas estrutura de dados.
+	Uma delas correspondendo à lista em si, e outra a um descritor que permite acesso directo a pontos chave da lista sem ter de a percorrer por completo.
+	A vantagem deste descritor surge para listas muito grandes, em que é mais fácil manter a informação contida no descritor do que percorrer a lista toda de cada vez.
+	Essa outra opção pesaria ainda mais por se tratar de uma estrutura partilhada de acesso em modo de exclusão mútua.
+
+	As esturturas que permitem a identificação e atendimento dos clientes são:
+	
+	\begin{lstlisting}
+	typedef struct clients_descriptor {
+		struct client *first;
+		struct client *last;
+		struct client *next;
+		int count;
+	} CLIENTS_DESCRIPTOR;
+
+	typedef struct client {
+		int fd;
+		char IP[INET_ADDRSTRLEN];
+		struct client *next;
+		struct client *previous;
+		struct stack_descriptor *stack_desc;
+	} CLIENT;
+	\end{lstlisting}
+	
+	De notar que o mesmo conceito de descritor é usado no \emph{stack}, mais uma vez com prováveis perdas de performance para stacks pequenos, mas que são ao mesmo tempo mais invariáveis ao seu tamanho.
+
+	Depois de escolhido um cliente da lista, as \emph{threads} são completamente iondependentes entre si e livres de qualquer problema de sincronização.
+	Um caso interessante surge quando, havendo mais \emph{workers} do que clientes, há mais do que uma \emph{thread} a processar o mesmo cliente.
+	Nesta situação só uma é que completa com êxito, não surgindo problema, ainda assim, o servidor foi desenhado tendo em mente vários clientes por cada \emph{worker}.
+	
+	Ultrapassado o problema de sincronismo, um dos desafios de ter uma só \emph{thread} capaz de dar resposta a todos os clientes ao mesmo tempo, impica o uso de funções de \emph{IO} assíncronas.
+	Em particular precisamos agora de desbloquear as \emph{threads} da função \verb|read()| e conforme tenham lido alguma coisa ou não do \emph{\emph{socket}}, mandá-las avançar para outro cliente na lista.
+	Este problema tem uma solução trivial, fazendo uso da função \verb|fcntl()|, mas que levanta outro problema: ver secção \ref{sec:servidor_desenvolvimento}.
+	
+
+
+\clearpage
+\subsection{Meios de comunicação\label{sec:servidor_comunicacao}}
+
+	\indent\indent O servidor, por ter um esquema de múltiplos fios de execução, tem obrigatoriamente esquemas de comunicação internos a acrescer aos \emph{sockets}.
+	
+	Internamente, para a passagem dos \emph{file descriptors} aos \emph{workers}, equacionou-se um mecanismo com um \emph{pipe} comum a todas as \emph{threads}, mas o esquema que pretendíamos exigia a presença de certas estruturas para listar os clientes, como já foi referido.
+	Por essa razão, o principal meio de comunicação entre os vários fios de execução são na verdade variáveis globais de acesso em regime de exclusão mútua, conseguida através de \emph{mutexes}, incluindo um \emph{mutex} condicional para parar as \emph{threads} quando não há clientes em espera.
+	
+	Para um outro fim, o \emph{pool Manager} necessita de comunicar com os \emph{workers} que lança.
+	Isto serve o intuito de lhes indicar que devem morrer.
+	
+	Um sinal é aqui a melhor opção, no entanto, não queremos que um sinal interrompa o tratamento de um cliente.
+	Por isso bloqueamos o sinal dentro das \emph{threads} mal estas são lançadas e no fim do tratamento de um cliente verificamos se foi lançado o sinal apropriado, \verb|SIG_INT| neste caso.
+
+\clearpage
+\subsection{Desenvolvimento futuro\label{sec:servidor_desenvolvimento}}
+
+	\indent\indent O principal elemento em falta no servidor na sua implementação actual é a espera activa sobre a execução dos clientes.
+	
+	Devido a tornarmos as operações de \emph{IO} sobre os \emph{sockets} assíncronas, ficamos com uma \emph{pool} de \emph{threads} que nunca pára de executar, num loop de espera activa de que um cliente escreve uma mensagem num \emph{\emph{socket}}.
+	
+	Paradoxalmente, o nosso servidor não consome mais CPU com maior carga de trabalho -- apesar de o fazer com maior número de clientes.
+	Isto é na verdade mau sinal, porque na verdade ele consome sempre o máximo (perto do máximo pelo menos) dos recursos que lhe são disponibilizados.
+	A excepção à regra verifica-se quando não há nenhum cliente na fila, caso em que um \emph{mutex} condicional bloqueia as \emph{threads}, independentemente do seu número.
+	
+	A forma de o evitar e contornar esta falha grave poderia passar por duas estratégias, não mutuamente exclusivas.
+	
+	A primeira, com recurso a funções da família do \verb|select()|.
+	Nesta abordagem as \emph{threads} ficam bloqueadas e, na chegada de uma comunicação, poderiam ser lançadas a percorrer a lista de clientes uma única vez.
+	Uma ou mais \emph{thread} iriam completar com sucesso o atendimento dos clientes que tinham comunicado alguma coisa, e todas as outras falhavam, mas, invariavelmente, todas se bloqueavam novamente.
+	Esta é a solução mais plausível a curto prazo.
+	
+	Uma segunda alternativa mais apelativa, mas que podia e devia ser combinada com a anterior, permite ainda maiores ganhos de performance em períodos de pouca actividade.
+	Ao invés de controlar o número de \emph{threads} na \emph{pool} estaticamente, poderíamos criar uma variável que dava conta da entropia do sistema.
+	Quantas mais \emph{threads} terminassem sem atender a nenhum cliente, mais \emph{threads} eram mortas libertando os recursos associados, e vice versa.
+		
+	Neste esquema, a \emph{pool} não só seria altamente configurável, mas teria um elemento de auto aprendizagem em que o único factor de ajuste seria um ganho a definir pelo administrador.
+
+	Uma forma possível de implementar esta segunda alternativa era incrementar uma variável afectada de um ganho positivo maior do que um, para evitar operações dispendiosas em vírgula flutuante, e decrementar com um ganho potencialmente distinto.
+	A incrementação seria executada, por exemplo, no atendimento bem sucedido a um cliente, e decrementada na detecção de um cliente parado.
+	
+	A partir daqui, o \emph{pool} \emph{Manager} teria apenas de matar ou criar \emph{threads} para as manter a oscilar com este valor.
+	Para evitar efeitos negativos com demasiadas criações de \emph{threads} ou eliminações, bastaria manter o esquema de histerese actual.
+
+	Em qualquer um dos casos a implementação do sinal que manda terminar uma \emph{thread} teria de ser revista, pois se as \emph{threads} não estivessem em execução, não poderíamos esperar que elas terminassem logo no esquema actual.
+
+
 \clearpage
