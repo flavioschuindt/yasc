@@ -26,7 +26,7 @@
 								 * and if there were threads to kill while there were no clients at all, than   *
 								 * the thread would only be killed when the conditional mutex would kick off    *
 								 * (with a new client) thus killing a thread and launching one right afterwards */
-#define MAX_WORKERS 100			/* neither the maximum nor the minimum may be reached for every possible combination *
+#define MAX_WORKERS 500			/* neither the maximum nor the minimum may be reached for every possible combination *
 								 * depending on CLIENTS_PER_SLAVE ratio and hysteresis                               */
 #define MAX_CLIENTS 1000		/* control is not synchronous with the other threads;                                      *
 								 * it's a read only operation where we can ignore race conditions for performance increase */
@@ -37,7 +37,7 @@
 															 * e.g. if this ratio = 2, set hysteresis to 1 at least                  *
 															 * while others just don't make any sense                                */
 #define POOL_REFRESH_RATE 1		/* [seconds] refresh rate for the pool size; use nanosleep() for finer control */
-#define POOL_HYSTERESIS 1		/* hysteresis while upgrading the pool; note that the refresh rate also introduces hysteresis, but in an unspecified amount *
+#define POOL_HYSTERESIS 2		/* hysteresis while upgrading the pool; note that the refresh rate also introduces hysteresis, but in an unspecified amount *
 								 * represents a number of clients that may be added / removed without updating the pool                                     */
 #define DOORMAN_DOZE 5			/* [seconds] period of inactivity of master when MAX_CLIENTS is reached; wakes up to see if he can allow anyone else in */
 /************************************************/

@@ -75,7 +75,8 @@ int main( int argc, char *argv[] ) {
 					fprintf(fout,"=====================================\n\n");
 					i++;	/* jumps the name argument; but not if the file isn't valid */
 				} else {
-					fprintf(stderr,">> Setup error!\n>> File \"%s\" not found.\n", argv[i+1]);
+					fprintf(stderr,":: Setup error!\n:: File \"%s\" not found.\n", argv[i+1]);
+					fout = stdout;		/* defaults to shell */
 				}
 
 			/* -l */
@@ -83,10 +84,10 @@ int main( int argc, char *argv[] ) {
 															 * not very useful if the command line is used, but possible nonetheless */
 				fout = fopen("log.txt","a");
 				if( fout == NULL ) {
-					fprintf(stderr,">> Setup error!\n>> Can't open log file.\n>> Redirecting output to \"stdout\".");
+					fprintf(stderr,":: Setup error!\n:: Can't open log file.\n:: Redirecting output to \"stdout\".");
 					fout = stdout;
 				} else {
-					fprintf(fout,">> Silent mode ON");
+					fprintf(fout,":: Silent mode ON");
 				}
 
 			/* -g */
@@ -95,17 +96,18 @@ int main( int argc, char *argv[] ) {
 
 			/* invalid argument */
 			} else {
-				fprintf(stderr,">> Setup error!\n>> Invalid argument \"%s\" ignored.\n", argv[i]);
+				fprintf(stderr,":: Setup error!\n:: Invalid argument \"%s\" ignored.\n", argv[i]);
 			}
 
 			i++;
 		}
 	} else {
 		fprintf(stderr,">> Setup error!\n>> Missing hostname and port.");
+		exit(0);
 	}
 
 	if( DBG & 1 ) {
-		fprintf(fout,">> Debug mode ON\n");
+		fprintf(fout,":: Debug mode ON\n");
 	}
 
 	/*signal(SIGALRM,timeout_handler);*/

@@ -59,7 +59,7 @@ void parse_line (char *string){
 
 		/* rejects number if it isn't surrounded by white-space exceptions are: '+' and '-' before the number */
 		} else if( (*endptr != '\0') && (endptr != parameter) ) {
-			fprintf(fout,">> Parsing error!\n>> Invalid number. Use only integers between %ld and %ld.\n>> Try help for assistance.\n",LONG_MIN,LONG_MAX);
+			fprintf(fout,":: Parsing error!\n:: Invalid number. Use only integers between %ld and %ld.\n:: Try help for assistance.\n",LONG_MIN,LONG_MAX);
 
 		/*
 		 * IF IT IS NOT A NUMBER
@@ -151,11 +151,35 @@ void handleRequest ( char Req, int Data ) {
 				/*} else {
 					fprintf(fout, "DEBUG:\t%c=> : =>%c\n", Req, inPackage.msg);
 				}*/
-			} else if( ((Req == 'R') || (Req == 'T') || (Req == 'P')) && (inPackage.msg == 'V') ) {
+			}
+
+			if( ((Req == 'R') || (Req == 'T') || (Req == 'P')) && (inPackage.msg == 'V') ) {
 				fprintf(fout, ":: %d\n", *returningData);
 
 			} else if( inPackage.msg == 'E' ) {
-				fprintf(fout, ":: Error!\n:: \"%c\" Command failed with error code %d.\n", Req, *returningData);
+
+				char str[15]; /* should be enough for any error code */
+
+				switch( *returningData ) {
+
+					case OUT_OF_RANGE:
+							strcpy(str,"OUT_OF_RANGE");
+							break;
+					case DIV_0:
+							strcpy(str,"DIV_0");
+							break;
+					case BIG_STACK:
+							strcpy(str,"BIG_STACK");
+							break;
+					case BAD_STACK:
+							strcpy(str,"BAD_STACK");
+							break;
+					case BAD_CMD:
+							strcpy(str,"BAD_CMD");
+				}
+
+
+				fprintf(fout, ":: Error!\n:: \"%c\" Command failed with error code [%d] %s.\n", Req, *returningData, str);
 			} else if( inPackage.msg == 'I' ) {
 				fprintf(fout, ":: Server error!\n:: Stack reinitialized.\n");
 			}
