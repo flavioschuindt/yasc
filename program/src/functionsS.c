@@ -111,7 +111,7 @@ void print_client_info () {
 	fprintf(stdout,"\n _______________________________________________________________________________\n");
 	fprintf(stdout,  "|                                                                               |\n");
 
-	caret = fprintf(stdout,  "| Clients connected    --    %d",number_of_workers);
+	caret = fprintf(stdout,  "| Clients connected    --    %d  slaves",number_of_workers);		/* no lock for number_of_workers means this number may be a little off when it gets printed */
 	while( caret < END_TAB ) {
 		caret += fprintf(stdout," ");
 	}
