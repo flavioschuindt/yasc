@@ -5,6 +5,8 @@
 	Ainda que com arestas a limar, este servidor em particular, que foi sem dúvida onde investimos mais tempo, suporta um número de clientes que é apenas limitado pela máquina em questão.
 	Não só cumpre os requisitvos definidos como os supera nalguns casos.
 	
-	
+	Na implementação, o servidor consegue lançar um número dinâmico de \emph{threads} que multiplexa entre si os muitos clientes que possam estar disponíveis para executar.
+	Enquanto que esta implementação trás versatilidade ao servidor, introduz também o problema acrescido de não aproveitar o bloqueio típico de operações de \emph{IO} para evitar esperas activas.
+	Ainda assim, mesmo não tendo tido tempo de as implementar, discutimos alternativas reais que poderiam minimizar ou eliminar este problema, levando a um servidor bastante robusto.
 
 \clearpage

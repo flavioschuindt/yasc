@@ -71,9 +71,26 @@
 
 
 	A razão por detrás desta abordagem foi um conceito de design que definimos bem cedo: queríamos uma \emph{pool} de \emph{threads} em que cada \emph{worker} fosse capaz de atender a vários clientes.
+
 	Como os clientes nem sempre estão a executar comandos, não só não faz sentido ter unidades computacionais bloqueadas no \verb|read()|, como não precisamos de tantas \emph{threads}.
 	Daqui vem uma grande vantagem na nossa implementação que é o facto de que podermos ter muitos mais clientes do que \emph{threads}.
-
+		
+	Aqui discutimos várias abordagens, uma delas um sistema em que o cliente estabelecia uma conexão por cada mensagem que enviava.
+	Nesta implementação, para controlar a identidade dos clientes (possivelmente residentes na mesma máquina) seria necessário um sistema adicional de \emph{tickets} para os associar a um dado stack.
+	Aqui não só o servidor executava num nível de abstração do cliente maior, como as workers estariam a lidar directamente com uma lista de pedidos e não de clientes, com simplificações óbvias no esquema de atendimento que viémos a implementar.
+	Esta solução, enquanto que muito versátil e poderosa, tinha as suas desvantagens.
+			
+	Em primeiro lugar, o tempo de desenvolvimento seria relativamente grande, pois envolvia uma gestão de stacks muito mais complexa.
+	Tal complexidade viria sobretudo da poluição do servidor com dados de clientes que saíssem sem fechar sessão explicitamente.
+	
+	Em segundo lugar, para o tamanho das mensagens trnasmitidas, calculámos, sem fazer testes contudo, que o \emph{overhead} introduzido pelo abrir e fechar do socket seria comparável ao tempo útil da ligação em si.
+	O efeito sendo a perda generalizada de \emph{performance}.
+	
+	E por último, o esquema de aceitação de ligações estaria exposto a um possível impasse: numa situação de muitos clientes, um cliente com sessão iniciada não conseguiria passar pelo \verb|accept()| e estaria a concorrer directamente com clientes sem sessão iniciada, sendo a única diferença a posse de um \emph{ticket}.
+	Ora, o servidor teria de receber o cliente, e caso a lotação do servidor estivesse esgotada, comparar o \emph{ticket} com uma lista e aceitar ou rejeitar o cliente com uma mensagem apropriada.
+	Aqui não só os clientes com \emph{ticket} teriam dificuldade em executar, como o servidor estaria activamente a rejeitar novos clientes, gastando recursos para tal.
+	
+	Posto isto, optámos por uma solução mais modesta em que mantemos uma lista de clientes activos, e um socket dedicado a cada um desses clientes.
 	Contudo esta implementação sacrifica alguma simplicidade na sincronização dos vários fios de execução e, sobretudo, a conveniência de bloquear automaticamente na chamada ao \verb|read()|.
 
 	\setlength{\parskip}{20pt}		% distance between paragraphs
@@ -183,14 +200,15 @@
 
 	\indent\indent O servidor, por ter um esquema de múltiplos fios de execução, tem obrigatoriamente esquemas de comunicação internos a acrescer aos \emph{sockets}.
 	
-	Internamente, para a passagem dos \emph{file descriptors} aos \emph{workers}, equacionou-se um mecanismo com um \emph{pipe} comum a todas as \emph{threads}, mas o esquema que pretendíamos exigia a presença de certas estruturas para listar os clientes, como já foi referido.
+	Internamente, para a passagem dos \emph{file descriptors} aos \emph{workers}, {equacionou-}{-se} um mecanismo com um \emph{pipe} comum a todas as \emph{threads}, mas o esquema que pretendíamos exigia a presença de certas estruturas para listar os clientes, como já foi referido.
 	Por essa razão, o principal meio de comunicação entre os vários fios de execução são na verdade variáveis globais de acesso em regime de exclusão mútua, conseguida através de \emph{mutexes}, incluindo um \emph{mutex} condicional para parar as \emph{threads} quando não há clientes em espera.
 	
 	Para um outro fim, o \emph{pool Manager} necessita de comunicar com os \emph{workers} que lança.
 	Isto serve o intuito de lhes indicar que devem morrer.
 	
 	Um sinal é aqui a melhor opção, no entanto, não queremos que um sinal interrompa o tratamento de um cliente.
-	Por isso bloqueamos o sinal dentro das \emph{threads} mal estas são lançadas e no fim do tratamento de um cliente verificamos se foi lançado o sinal apropriado, \verb|SIG_INT| neste caso.
+	Por isso bloqueamos o sinal dentro das \emph{threads} mal estas são lançadas permitindo um tratamento assíncrono.
+	No fim do tratamento de um cliente verificamos se foi lançado o sinal apropriado, \verb|SIG_INT| neste caso, e matamos a \emph{thread} que, tendo sido configurada como \emph{detached} não depende de nennhum outro fio de execução para sair e libertar os seus recursos computacionais.
 
 \clearpage
 \subsection{Desenvolvimento futuro\label{sec:servidor_desenvolvimento}}

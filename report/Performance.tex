@@ -1,0 +1,28 @@
+\section{Desempenho\label{sec:Desempenho}}
+
+	\indent\indent Conscientes de que o nosso projecto está longe de ser eficiente no uso de recursos, pelos problemas já descritos, não deixamos de esperar um bom desempenho no atendimento aos clientes.
+	Aliás, o ponto onde o desempenho é sub-óptimo, é precisamente quando o servidor tem clientes registados, mas nenhum requisita qualquer serviço.
+	
+	Com isto em mente desenhámos um ficheiro de comandos suficientemente longo para que a sua execução não fosse demasiado rápida, e bombardeámos o servidor com clientes a ler os comandos directamente desse ficheiro.
+	
+	Os parâmetros de ajuste da \emph{pool}, completamente arbitrários, foram:
+	
+	\begin{lstlisting}
+		#define MIN_WORKERS 1
+		#define MAX_WORKERS 500
+		#define MAX_CLIENTS 1000
+		#define CLIENTS_PER_SLAVE ( MAX_CLIENTS / MAX_WORKERS )
+		#define POOL_REFRESH_RATE 1		/* [seconds] */
+		#define POOL_HYSTERESIS 2
+	\end{lstlisting}
+
+	No anexo \ref{app:snpsht} é visível o output do comando \verb|M| no servidor a meio da execução.
+	Ao todo lançámos por volta de 200 clientes, e todos eles terminaram a execução em sucesso.
+	
+	Testes com \verb|MAX_CLIENTS| inferiores ao número de clientes lançados, proporcionaram resultados igualmente positivos.
+	
+	De notar que estes testes foram executados, por simplicidade, numa única máquina de teste, a correr simultâneamente tanto o servidor como os clientes.
+	Por este motivo, o impacto no desempenho do computador foi na verdade superior ao de condições normais, ainda que largamente imperceptíveis na máquina em questão.
+	
+	
+\clearpage
