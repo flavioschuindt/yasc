@@ -89,7 +89,7 @@ int main( int argc, char *argv[] ) {
 	}
 
 
-	/* every thread inherits this mask                     *
+	/* every thread access this mask                       *
 	 * allowing to handle the signal and thus being killed *
 	 * in the same way                                     */
 	SIG_EMPTYSET(soft_kill_set);

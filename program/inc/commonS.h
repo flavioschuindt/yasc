@@ -48,6 +48,7 @@
 /* Global Variables; remember to initialize */
 
 EXTERN int VRB;						/* verbose flag */
+EXTERN int number_of_workers;		/* number of slaves; global to allow printing statistics directly without pipes, etc. */
 EXTERN pthread_t poolManager, serverManager, master_pthread_t;	/* important threads IDs */
 
 EXTERN CLIENTS_DESCRIPTOR clients_desc;

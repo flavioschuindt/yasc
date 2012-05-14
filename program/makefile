@@ -80,7 +80,7 @@ runS:
 
 runC:
 	clear
-	./bin/yascC.exe ubuntu 50000 -g -f init/cmd.txt &
+	./bin/yascC.exe ubuntu 50000 -f init/cmd.txt &
 
 #############################################################
 # Maintenance

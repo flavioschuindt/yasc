@@ -95,14 +95,10 @@ PACKAGE cmd_div (STACK_DESCRIPTOR *stack_desc, PACKAGE outPackage) {	/* if 'E' i
 	if( stack_desc->count >= 2 ) {
 		if( stack_desc->first->operand != 0 ) {
 
-			if ( (stack_desc->first->next->operand == LONG_MIN) && (stack_desc->first->operand == -1) ) {
-				/* OVER/UNDERFLOW */
-				return mountResponsePackage('E',OUT_OF_RANGE,outPackage);
-			} else {
-				division = stack_desc->first->next->operand / stack_desc->first->operand;
-				reorganizeStack(stack_desc,division);
-				return mountResponsePackage('V',OK,outPackage);
-			}
+			division = stack_desc->first->next->operand / stack_desc->first->operand;
+			reorganizeStack(stack_desc,division);
+			return mountResponsePackage('V',OK,outPackage);
+
 		} else {
 			/* division by 0 */
 			return mountResponsePackage('E',DIV_0,outPackage);

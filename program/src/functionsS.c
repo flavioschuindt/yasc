@@ -36,6 +36,7 @@
 void createInitialServerConditions () {
 	master_pthread_t = pthread_self();
 	VRB = 0;
+	number_of_workers = 0;
 
 	pthread_mutex_init(&p_mutex, NULL);
 	pthread_cond_init(&p_cond_var,NULL);
@@ -109,7 +110,13 @@ void print_client_info () {
 
 	fprintf(stdout,"\n _______________________________________________________________________________\n");
 	fprintf(stdout,  "|                                                                               |\n");
-	fprintf(stdout,  "| Clients connected                                                             |\n");
+
+	caret = fprintf(stdout,  "| Clients connected    --    %d",number_of_workers);
+	while( caret < END_TAB ) {
+		caret += fprintf(stdout," ");
+	}
+	fprintf(stdout,"|\n");
+
 	fprintf(stdout,  "|_______________________________________________________________________________|\n");
 	fprintf(stdout,  "| IP                [Stack]                                                     |\n");
 	fprintf(stdout,  "|                                                                               |\n");
@@ -157,7 +164,7 @@ void print_client_info () {
 
 
 void *manage_pool () {
-	int number_of_workers=0;
+
 	pthread_t slaves[MAX_WORKERS];	/* avoids dynamic allocation by having always the maximum size */
 
 	/* blocks signal so that it doesn't interrupt while attending to a client */
